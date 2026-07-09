@@ -254,39 +254,6 @@ export default function HomePage() {
               }}
             />
           )}
-          <Link
-            href="/serial"
-            className="nf-hero-play"
-            style={{
-              position: "absolute",
-              top: "34%",
-              right: 44,
-              zIndex: 2,
-              width: 96,
-              height: 96,
-              borderRadius: 999,
-              background: "rgba(228,216,215,0.62)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              color: "var(--fg-strong)",
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 12,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              lineHeight: 1.5,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              textAlign: "center",
-              transition:
-                "transform var(--dur-base) var(--ease-editorial),background var(--dur-fast) var(--ease-out)",
-            }}
-          >
-            Read
-            <br />
-            now
-          </Link>
           <div
             style={{
               position: "absolute",
