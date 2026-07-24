@@ -1,611 +1,173 @@
 "use client";
-
 import { useState } from "react";
 import { featuredEvent, events, recordings } from "@/lib/data";
-
 type EventFilter = "all" | "inperson" | "online" | "workshop";
-
-const chips: { key: EventFilter; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "inperson", label: "In person" },
-  { key: "online", label: "Online" },
-  { key: "workshop", label: "Workshops" },
+const chips: {
+    key: EventFilter;
+    label: string;
+}[] = [
+    { key: "all", label: "All" },
+    { key: "inperson", label: "In person" },
+    { key: "online", label: "Online" },
+    { key: "workshop", label: "Workshops" },
 ];
-
 export default function EventsPage() {
-  const [eventFilter, setEventFilter] = useState<EventFilter>("all");
-
-  const eventsFiltered =
-    eventFilter === "all"
-      ? events
-      : events.filter((e) => e.cat === eventFilter);
-
-  return (
-    <main
-      style={{
-        maxWidth: 1240,
-        margin: "0 auto",
-        padding: "56px 40px 64px",
-      }}
-    >
-      <div
-        style={{
-          fontFamily: "var(--font-display)",
-          fontWeight: 700,
-          fontSize: 11,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--accent)",
-          marginBottom: 14,
-        }}
-      >
+    const [eventFilter, setEventFilter] = useState<EventFilter>("all");
+    const eventsFiltered = eventFilter === "all"
+        ? events
+        : events.filter((e) => e.cat === eventFilter);
+    return (<main className="max-[900px]:px-8 max-[900px]:py-12 max-[640px]:px-5 max-[640px]:py-9 [max-width:1240px] [margin:0_auto] [padding:56px_40px_64px]">
+      <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:14px]">
         Gather
       </div>
-      <h1
-        style={{
-          fontFamily: "var(--font-display)",
-          fontWeight: 700,
-          fontSize: 56,
-          letterSpacing: "-0.03em",
-          color: "var(--fg-strong)",
-          margin: "0 0 12px",
-        }}
-      >
-        Events &amp; readings
+      <h1 className="font-sans [font-weight:700] [font-size:56px] [letter-spacing:-0.03em] [color:var(--color-deep-plum)] [margin:0_0_12px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
+        Events &amp; Readings
       </h1>
-      <p
-        style={{
-          fontSize: 18,
-          color: "var(--fg-2)",
-          maxWidth: 600,
-          margin: "0 0 40px",
-        }}
-      >
-        Festival appearances, live readings, workshops and retreats — book it
-        all here. No more leaving for a separate ticketing site.
+      <p className="[font-size:18px] [color:var(--color-plum-copy)] [max-width:600px] [margin:0_0_40px] text-pretty">
+        Festival appearances, live readings, workshops and retreats.
       </p>
 
-      <article
-        style={{
-          background: "var(--surface-card)",
-          borderRadius: 32,
-          overflow: "hidden",
-          display: "grid",
-          gridTemplateColumns: "0.9fr 1.1fr",
-          alignItems: "stretch",
-          boxShadow: "var(--shadow-md)",
-          margin: "0 0 36px",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            background: featuredEvent.gradient,
-            minHeight: 300,
-            padding: 32,
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "space-between",
-          }}
-        >
-          <span
-            style={{
-              alignSelf: "flex-start",
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "var(--fg-on-accent)",
-              background: "rgba(31,42,56,0.28)",
-              padding: "6px 14px",
-              borderRadius: 999,
-            }}
-          >
+      <article className="[background:var(--color-brand-surface)] [border-radius:32px] overflow-hidden grid [grid-template-columns:0.9fr_1.1fr] items-stretch [box-shadow:0_12px_28px_rgba(53,5,73,0.08),0_2px_6px_rgba(53,5,73,0.04)] [margin:0_0_36px] max-[900px]:grid-cols-1">
+        <div className={`relative flex min-h-[300px] flex-col justify-between p-8 ${featuredEvent.gradient}`}>
+          <span className="[align-self:flex-start] font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.12em] uppercase [color:var(--color-brand-surface)] [background:rgba(53,5,73,0.28)] [padding:6px_14px] [border-radius:999px]">
             {featuredEvent.type}
           </span>
-          <div
-            style={{ display: "flex", alignItems: "baseline", gap: 12 }}
-          >
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 13,
-                letterSpacing: "0.14em",
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.85)",
-              }}
-            >
+          <div className="flex items-baseline [gap:12px]">
+            <div className="font-sans [font-weight:700] [font-size:13px] [letter-spacing:0.14em] uppercase [color:rgba(255,255,255,0.85)]">
               {featuredEvent.mon}
             </div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 72,
-                letterSpacing: "-0.04em",
-                color: "var(--st-white)",
-                lineHeight: 0.85,
-              }}
-            >
+            <div className="font-sans [font-weight:700] [font-size:72px] [letter-spacing:-0.04em] [color:var(--color-brand-surface)] [line-height:0.85]">
               {featuredEvent.day}
             </div>
           </div>
         </div>
-        <div
-          style={{
-            padding: "40px 44px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--accent)",
-              marginBottom: 12,
-            }}
-          >
+        <div className="[padding:40px_44px] flex flex-col justify-center">
+          <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:12px]">
             Next up · don&apos;t miss it
           </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: "clamp(28px,3vw,38px)",
-              letterSpacing: "-0.025em",
-              color: "var(--fg-strong)",
-              margin: "0 0 14px",
-              lineHeight: 1.04,
-            }}
-          >
+          <h2 className="font-sans [font-weight:700] [font-size:clamp(28px,3vw,38px)] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_14px] [line-height:1.04] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
             {featuredEvent.title}
           </h2>
-          <p
-            style={{
-              fontSize: 15,
-              lineHeight: 1.6,
-              color: "var(--fg-2)",
-              margin: "0 0 22px",
-              maxWidth: "52ch",
-            }}
-          >
+          <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_22px] [max-width:52ch] text-pretty">
             {featuredEvent.blurb}
           </p>
-          <div
-            style={{
-              display: "flex",
-              gap: 12,
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <button
-              className="nf-btn-primary"
-              style={{
-                background: "var(--accent)",
-                color: "var(--fg-on-accent)",
-                padding: "14px 26px",
-                borderRadius: 999,
-                fontFamily: "var(--font-display)",
-                fontWeight: 600,
-                fontSize: 15,
-              }}
-            >
+          <div className="flex [gap:12px] items-center flex-wrap">
+            <button type="button" className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:14px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
               Get tickets ↗
             </button>
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 13,
-                color: "var(--fg-3)",
-              }}
-            >
+            <span className="font-sans [font-size:13px] [color:var(--color-plum-muted)]">
               {featuredEvent.where} · {featuredEvent.when}
             </span>
           </div>
         </div>
       </article>
 
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 20,
-          flexWrap: "wrap",
-          marginBottom: 22,
-        }}
-      >
-        <h2
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 700,
-            fontSize: 28,
-            letterSpacing: "-0.02em",
-            color: "var(--fg-strong)",
-            margin: 0,
-          }}
-        >
+      <div className="flex items-center justify-between [gap:20px] flex-wrap [margin-bottom:22px]">
+        <h2 className="font-sans [font-weight:700] [font-size:28px] [letter-spacing:-0.02em] [color:var(--color-deep-plum)] [margin:0px] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
           Upcoming
         </h2>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div className="flex flex-wrap gap-2.5">
           {chips.map((chip) => {
             const active = eventFilter === chip.key;
-            return (
-              <button
-                key={chip.key}
-                onClick={() => setEventFilter(chip.key)}
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 600,
-                  fontSize: 13,
-                  padding: "9px 18px",
-                  borderRadius: 999,
-                  transition: "all var(--dur-base) var(--ease-editorial)",
-                  background: active
-                    ? "var(--bg-inverse)"
-                    : "var(--surface-card)",
-                  color: active ? "var(--fg-on-dark)" : "var(--fg-strong)",
-                }}
-              >
+            return (<button type="button" key={chip.key} onClick={() => setEventFilter(chip.key)} className={`min-h-[46px] rounded-full px-[18px] py-[9px] font-sans text-[13px] font-semibold transition-colors duration-200 ${active ? "bg-[var(--color-deep-plum)] text-[var(--color-brand-surface)]" : "bg-[var(--color-brand-surface)] text-[var(--color-deep-plum)]"}`}>
                 {chip.label}
-              </button>
-            );
-          })}
+              </button>);
+        })}
         </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {eventsFiltered.map((e) => (
-          <article
-            key={e.title}
-            className="nf-card-hover"
-            style={{
-              background: "var(--surface-card)",
-              borderRadius: 22,
-              padding: "24px 28px",
-              boxShadow: "var(--shadow-sm)",
-              display: "flex",
-              alignItems: "center",
-              gap: 28,
-            }}
-          >
-            <div
-              style={{
-                flex: "none",
-                width: 80,
-                textAlign: "center",
-                background: "var(--bg-3)",
-                borderRadius: 16,
-                padding: "14px 0",
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: 12,
-                  letterSpacing: "0.1em",
-                  textTransform: "uppercase",
-                  color: "var(--accent)",
-                }}
-              >
+      <div className="flex flex-col gap-4">
+        {eventsFiltered.map((e) => (<article key={e.title} className="flex items-center gap-7 rounded-[22px] bg-[var(--color-brand-surface)] px-7 py-6 shadow-[0_4px_12px_rgba(53,5,73,0.06)] transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl max-[640px]:grid max-[640px]:grid-cols-[64px_minmax(0,1fr)] max-[640px]:items-start max-[640px]:gap-4 max-[640px]:p-[18px]">
+            <div className="w-20 flex-none rounded-2xl bg-[var(--color-cool-teal)] py-3.5 text-center max-[640px]:w-16 max-[640px]:rounded-[14px]">
+              <div className="font-sans [font-weight:700] [font-size:12px] [letter-spacing:0.1em] uppercase [color:var(--color-hot-magenta)]">
                 {e.mon}
               </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: 30,
-                  letterSpacing: "-0.02em",
-                  color: "var(--fg-strong)",
-                  lineHeight: 1,
-                  marginTop: 2,
-                }}
-              >
+              <div className="font-sans [font-weight:700] [font-size:30px] [letter-spacing:-0.02em] [color:var(--color-deep-plum)] [line-height:1] [margin-top:2px]">
                 {e.day}
               </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 11,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "var(--strong)",
-                  fontWeight: 700,
-                  marginBottom: 6,
-                }}
-              >
+            <div className="min-w-0 flex-1">
+              <div className="font-sans [font-size:11px] [letter-spacing:0.12em] uppercase [color:var(--color-hot-magenta)] [font-weight:700] [margin-bottom:6px]">
                 {e.type}
               </div>
-              <h3
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 700,
-                  fontSize: 22,
-                  letterSpacing: "-0.015em",
-                  color: "var(--fg-strong)",
-                  margin: "0 0 6px",
-                }}
-              >
+              <h3 className="break-words font-sans [font-weight:700] [font-size:22px] [letter-spacing:-0.015em] [color:var(--color-deep-plum)] [margin:0_0_6px]">
                 {e.title}
               </h3>
-              <div style={{ fontSize: 14, color: "var(--fg-2)" }}>
+              <div className="[font-size:14px] [color:var(--color-plum-copy)]">
                 {e.where}
               </div>
             </div>
-            <button
-              className="nf-btn-primary"
-              style={{
-                flex: "none",
-                background: "var(--accent)",
-                color: "var(--fg-on-accent)",
-                padding: "13px 24px",
-                borderRadius: 999,
-                fontFamily: "var(--font-display)",
-                fontWeight: 600,
-                fontSize: 14,
-              }}
-            >
+            <button type="button" className="flex-none rounded-full bg-[var(--color-hot-magenta)] px-6 py-[13px] font-sans text-sm font-semibold text-[var(--color-brand-surface)] transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 max-[640px]:col-span-full max-[640px]:min-h-[46px] max-[640px]:w-full">
               {e.cta}
             </button>
-          </article>
-        ))}
+          </article>))}
       </div>
 
-      <section style={{ padding: "64px 0 8px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            marginBottom: 24,
-          }}
-        >
+      <section className="[padding:64px_0_8px]">
+        <div className="flex items-end justify-between [margin-bottom:24px]">
           <div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 11,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--accent)",
-              }}
-            >
+            <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)]">
               Missed one?
             </div>
-            <h2
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 32,
-                letterSpacing: "-0.025em",
-                color: "var(--fg-strong)",
-                margin: "8px 0 0",
-              }}
-            >
-              Catch up on the recordings
+            <h2 className="font-sans [font-weight:700] [font-size:32px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:8px_0_0] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
+              Catch Up on the Recordings
             </h2>
           </div>
-          <span
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: 13,
-              color: "var(--fg-3)",
-            }}
-          >
+          <span className="font-sans [font-size:13px] [color:var(--color-plum-muted)]">
             Members watch back any time
           </span>
         </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 18,
-          }}
-        >
-          {recordings.map((r) => (
-            <article
-              key={r.title}
-              className="nf-card-hover"
-              style={{
-                cursor: "pointer",
-                background: "var(--surface-card)",
-                borderRadius: 22,
-                overflow: "hidden",
-                boxShadow: "var(--shadow-sm)",
-              }}
-            >
-              <div
-                style={{
-                  position: "relative",
-                  height: 130,
-                  background: r.gradient,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 999,
-                    background: "rgba(244,227,215,0.92)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "var(--bg-inverse)",
-                  }}
-                >
-                  <svg
-                    width="17"
-                    height="17"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    style={{ marginLeft: 3 }}
-                  >
+        <div className="grid [grid-template-columns:repeat(3,1fr)] [gap:18px] max-[900px]:grid-cols-1">
+          {recordings.map((r) => (<article key={r.title} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer [background:var(--color-brand-surface)] [border-radius:22px] overflow-hidden [box-shadow:0_4px_12px_rgba(53,5,73,0.06)]">
+              <div className={`relative flex h-[130px] items-center justify-center ${r.gradient}`}>
+                <span className="[width:52px] [height:52px] [border-radius:999px] [background:rgba(196,185,203,0.92)] flex items-center justify-center [color:var(--color-deep-plum)]">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" className="[margin-left:3px]">
                     <path d="M8 5.14v13.72L19 12z"></path>
                   </svg>
                 </span>
-                <span
-                  style={{
-                    position: "absolute",
-                    bottom: 12,
-                    right: 12,
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 600,
-                    fontSize: 11,
-                    letterSpacing: "0.04em",
-                    color: "var(--st-soft-cream)",
-                    background: "rgba(31,42,56,0.5)",
-                    padding: "4px 10px",
-                    borderRadius: 999,
-                  }}
-                >
+                <span className="absolute [bottom:12px] [right:12px] font-sans [font-weight:600] [font-size:11px] [letter-spacing:0.04em] [color:var(--color-soft-lavender)] [background:rgba(53,5,73,0.5)] [padding:4px_10px] [border-radius:999px]">
                   {r.duration}
                 </span>
               </div>
-              <div style={{ padding: "20px 22px" }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 11,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: "var(--accent)",
-                    marginBottom: 8,
-                  }}
-                >
+              <div className="[padding:20px_22px]">
+                <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.1em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:8px]">
                   {r.type}
                 </div>
-                <h3
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 600,
-                    fontSize: 17,
-                    lineHeight: 1.25,
-                    color: "var(--fg-strong)",
-                    margin: "0 0 8px",
-                  }}
-                >
+                <h3 className="font-sans [font-weight:600] [font-size:17px] [line-height:1.25] [color:var(--color-deep-plum)] [margin:0_0_8px]">
                   {r.title}
                 </h3>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 12,
-                    letterSpacing: "0.04em",
-                    color: "var(--fg-3)",
-                  }}
-                >
+                <div className="font-sans [font-size:12px] [letter-spacing:0.04em] [color:var(--color-plum-muted)]">
                   {r.date}
                 </div>
               </div>
-            </article>
-          ))}
+            </article>))}
         </div>
       </section>
 
-      <section style={{ padding: "40px 0 0" }}>
-        <div
-          style={{
-            background: "var(--bg-inverse)",
-            borderRadius: 36,
-            padding: "clamp(40px,5vw,56px)",
-            display: "grid",
-            gridTemplateColumns: "1.1fr 0.9fr",
-            gap: 40,
-            alignItems: "center",
-          }}
-        >
+      <section className="[padding:40px_0_0]">
+        <div className="[background:var(--color-deep-plum)] [border-radius:36px] [padding:clamp(40px,5vw,56px)] grid [grid-template-columns:1.1fr_0.9fr] [gap:40px] items-center max-[900px]:grid-cols-1">
           <div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 11,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                marginBottom: 16,
-              }}
-            >
+            <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:16px]">
               Invite Nia
             </div>
-            <h2
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: "clamp(28px,3.4vw,40px)",
-                letterSpacing: "-0.03em",
-                color: "var(--st-soft-cream)",
-                margin: "0 0 14px",
-                lineHeight: 1.04,
-                maxWidth: "18ch",
-              }}
-            >
-              Bring Nia to your festival or book club
+            <h2 className="font-sans [font-weight:700] [font-size:clamp(28px,3.4vw,40px)] [letter-spacing:-0.03em] [color:var(--color-soft-lavender)] [margin:0_0_14px] [line-height:1.04] [max-width:18ch] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
+              Bring Nia to Your Festival or Book Club
             </h2>
-            <p
-              style={{
-                fontSize: 16,
-                lineHeight: 1.6,
-                color: "rgba(228,216,215,0.8)",
-                margin: 0,
-                maxWidth: "48ch",
-              }}
-            >
+            <p className="[font-size:16px] [line-height:1.6] [color:rgba(196,185,203,0.8)] [margin:0px] [max-width:48ch] text-pretty">
               Readings, panels, craft talks, and book-club drop-ins — in person
               or virtual. Tell us about your event and a date you have in mind.
             </p>
           </div>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              alignItems: "flex-start",
-            }}
-          >
-            <button
-              className="nf-btn-primary"
-              style={{
-                background: "var(--accent)",
-                color: "var(--fg-on-accent)",
-                padding: "15px 28px",
-                borderRadius: 999,
-                fontFamily: "var(--font-display)",
-                fontWeight: 600,
-                fontSize: 15,
-              }}
-            >
+          <div className="flex flex-col [gap:12px] items-start">
+            <button type="button" className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_28px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
               Send an invitation ↗
             </button>
-            <span
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: 13,
-                color: "rgba(228,216,215,0.6)",
-              }}
-            >
+            <span className="font-sans [font-size:13px] [color:rgba(196,185,203,0.6)]">
               or email events@stilettopress.com
             </span>
           </div>
         </div>
       </section>
 
-      <div style={{ marginTop: 56 }}></div>
-    </main>
-  );
+      <div className="[margin-top:56px]"></div>
+    </main>);
 }

@@ -4,13 +4,13 @@
    ============================================================= */
 
 /* ---------- Book-cover gradients ---------- */
-export const COCOA = "linear-gradient(160deg,#6B3E2E 0%,#2a1810 100%)";
-export const NAVY = "linear-gradient(160deg,#2A3A4D 0%,#0d141d 100%)";
-export const TEAL = "linear-gradient(160deg,#4EA7A0 0%,#1c4a47 100%)";
-export const BURNT = "linear-gradient(160deg,#D96A3A 0%,#6e2f10 100%)";
-export const MAUVE = "linear-gradient(160deg,#A46A7E 0%,#4d2c38 100%)";
-export const CORAL = "linear-gradient(160deg,#E68476 0%,#a23f31 100%)";
-export const AMBER = "linear-gradient(160deg,#D69A48 0%,#7a4d16 100%)";
+export const COCOA = "bg-[linear-gradient(160deg,var(--color-deep-plum)_0%,var(--color-hot-magenta)_100%)]";
+export const NAVY = "bg-[linear-gradient(160deg,var(--color-deep-plum)_0%,var(--color-cool-teal)_140%)]";
+export const TEAL = "bg-[linear-gradient(160deg,var(--color-cool-teal)_0%,var(--color-deep-plum)_100%)]";
+export const BURNT = "bg-[linear-gradient(160deg,var(--color-cool-teal)_0%,var(--color-hot-magenta)_100%)]";
+export const MAUVE = "bg-[linear-gradient(160deg,var(--color-hot-magenta)_0%,var(--color-deep-plum)_100%)]";
+export const CORAL = "bg-[linear-gradient(160deg,var(--color-cool-teal)_0%,var(--color-hot-magenta)_100%)]";
+export const AMBER = "bg-[linear-gradient(160deg,var(--color-cool-teal)_0%,var(--color-deep-plum)_100%)]";
 
 /* ---------- Navigation ---------- */
 export interface NavItem {
@@ -26,7 +26,7 @@ export const navItems: NavItem[] = [
   { key: "community", label: "Community", href: "/community", match: ["/community"] },
   { key: "events", label: "Events", href: "/events", match: ["/events"] },
   { key: "academy", label: "Academy", href: "/academy", match: ["/academy"] },
-  { key: "membership", label: "Membership", href: "/membership", match: ["/membership"] },
+  { key: "membership", label: "Join the Circle", href: "/membership", match: ["/membership"] },
 ];
 
 /* ---------- Books & series ---------- */
@@ -201,10 +201,10 @@ export interface Thread {
 }
 
 export const threads: Thread[] = [
-  { tag: "Forty-Nothing", title: "Did Luke deserve a second chance after six years of silence?", author: "Tasha R.", initials: "TR", avatarColor: "var(--st-cocoa-brown)", when: "2h ago", count: "48", pinned: false },
-  { tag: "Backlist", title: "Best grown-folks romance in the whole catalogue — defend your pick", author: "Imani K.", initials: "IK", avatarColor: "var(--st-muted-mauve)", when: "5h ago", count: "112", pinned: false },
-  { tag: "Character debate", title: "Riley vs. Robyn: who actually grew the most?", author: "Denise W.", initials: "DW", avatarColor: "var(--st-teal-green)", when: "yesterday", count: "27", pinned: false },
-  { tag: "Craft talk", title: "Loving the serial format — why serialize instead of publish?", author: "Nia F.", initials: "NF", avatarColor: "var(--st-deep-navy)", when: "3d ago", count: "19", pinned: true },
+  { tag: "Forty-Nothing", title: "Did Luke deserve a second chance after six years of silence?", author: "Tasha R.", initials: "TR", avatarColor: "bg-[var(--color-deep-plum)]", when: "2h ago", count: "48", pinned: false },
+  { tag: "Backlist", title: "Best grown-folks romance in the whole catalogue — defend your pick", author: "Imani K.", initials: "IK", avatarColor: "bg-[var(--color-hot-magenta)]", when: "5h ago", count: "112", pinned: false },
+  { tag: "Character debate", title: "Riley vs. Robyn: who actually grew the most?", author: "Denise W.", initials: "DW", avatarColor: "bg-[var(--color-cool-teal)]", when: "yesterday", count: "27", pinned: false },
+  { tag: "Craft talk", title: "Loving the serial format — why serialize instead of publish?", author: "Nia F.", initials: "NF", avatarColor: "bg-[var(--color-deep-plum)]", when: "3d ago", count: "19", pinned: true },
 ];
 
 export interface Club {
@@ -228,9 +228,9 @@ export interface Reaction {
 }
 
 export const reactions: Reaction[] = [
-  { initials: "TR", name: "Tasha R.", color: "var(--st-cocoa-brown)", quote: "The drawer line. I gasped. She would NOT open it in my house." },
-  { initials: "IK", name: "Imani K.", color: "var(--st-muted-mauve)", quote: "Six years and he shows up empty-handed? Bold. Reading on." },
-  { initials: "DW", name: "Denise W.", color: "var(--st-deep-navy)", quote: '"Don’t" doing all the heavy lifting here. Chills.' },
+  { initials: "TR", name: "Tasha R.", color: "bg-[var(--color-deep-plum)]", quote: "The drawer line. I gasped. She would NOT open it in my house." },
+  { initials: "IK", name: "Imani K.", color: "bg-[var(--color-hot-magenta)]", quote: "Six years and he shows up empty-handed? Bold. Reading on." },
+  { initials: "DW", name: "Denise W.", color: "bg-[var(--color-deep-plum)]", quote: '"Don’t" doing all the heavy lifting here. Chills.' },
 ];
 
 export const communityStats = [
@@ -241,9 +241,9 @@ export const communityStats = [
 ];
 
 export const circleSessions = [
-  { mon: "MAR", day: "02", type: "Live read", title: "Forty-Nothing, Ch. 9–11 — read live", where: "Reader Circle", host: "With Nia", accent: "var(--accent)" },
-  { mon: "MAR", day: "18", type: "Workshop", title: "Writing the slow burn", where: "Writers Circle", host: "With Nia", accent: "var(--feature)" },
-  { mon: "APR", day: "05", type: "Live Q&A", title: "Ask Nia anything", where: "Inner Circle", host: "With Nia", accent: "var(--highlight)" },
+  { mon: "MAR", day: "02", type: "Live read", title: "Forty-Nothing, Ch. 9–11 — read live", where: "Reader Circle", host: "With Nia", accent: "text-[var(--color-hot-magenta)]" },
+  { mon: "MAR", day: "18", type: "Workshop", title: "Writing the slow burn", where: "Writers Circle", host: "With Nia", accent: "text-[var(--color-cool-teal)]" },
+  { mon: "APR", day: "05", type: "Live Q&A", title: "Ask Nia anything", where: "Inner Circle", host: "With Nia", accent: "text-[var(--color-cool-teal)]" },
 ];
 
 export const principles = [
@@ -253,21 +253,7 @@ export const principles = [
 ];
 
 /* ---------- Membership tiers ---------- */
-export interface TierStyles {
-  bg: string;
-  border: string;
-  shadow: string;
-  label: string;
-  priceColor: string;
-  perColor: string;
-  descColor: string;
-  ctaBg: string;
-  ctaColor: string;
-  check: string;
-  featColor: string;
-}
-
-export interface Tier extends TierStyles {
+export interface Tier {
   name: string;
   monthly: number; // 0 = free
   desc: string;
@@ -281,18 +267,7 @@ export const tiers: Tier[] = [
     name: "Free Reader",
     monthly: 0,
     desc: "The front door — everything public, no card needed.",
-    bg: "var(--surface-card)",
-    border: "1px solid var(--border-1)",
-    shadow: "var(--shadow-xs)",
-    label: "var(--fg-strong)",
-    priceColor: "var(--fg-strong)",
-    perColor: "var(--fg-3)",
-    descColor: "var(--fg-2)",
-    ctaBg: "transparent",
-    ctaColor: "var(--fg-strong)",
     cta: "Start free",
-    check: "var(--feature)",
-    featColor: "var(--fg-2)",
     featured: false,
     features: ["Weekly newsletter", "Blog & Quick Bites", "New-release alerts", "Public serial chapters"],
   },
@@ -300,18 +275,7 @@ export const tiers: Tier[] = [
     name: "Reader Circle",
     monthly: 7,
     desc: "Read the serials as they unfold, with the early drops.",
-    bg: "var(--bg-3)",
-    border: "none",
-    shadow: "var(--shadow-sm)",
-    label: "var(--bg-inverse)",
-    priceColor: "var(--bg-inverse)",
-    perColor: "rgba(31,42,56,0.6)",
-    descColor: "rgba(31,42,56,0.78)",
-    ctaBg: "var(--bg-inverse)",
-    ctaColor: "var(--fg-on-dark)",
     cta: "Join Reader Circle",
-    check: "var(--accent)",
-    featColor: "rgba(31,42,56,0.82)",
     featured: false,
     features: ["Everything in Free", "Full serialized fiction", "Early chapters", "Reader discussions", "Monthly live chat"],
   },
@@ -319,18 +283,7 @@ export const tiers: Tier[] = [
     name: "Inner Circle",
     monthly: 18,
     desc: "The full reader experience, closest to Nia.",
-    bg: "var(--bg-inverse)",
-    border: "none",
-    shadow: "var(--shadow-lg)",
-    label: "var(--st-light-blush)",
-    priceColor: "var(--st-soft-cream)",
-    perColor: "rgba(228,216,215,0.6)",
-    descColor: "rgba(228,216,215,0.78)",
-    ctaBg: "var(--accent)",
-    ctaColor: "var(--fg-on-accent)",
     cta: "Join Inner Circle",
-    check: "var(--accent)",
-    featColor: "rgba(228,216,215,0.86)",
     featured: true,
     features: ["Everything in Reader", "Bonus stories & outtakes", "Live Q&A with Nia", "Members-only book club", "Audiobook previews"],
   },
@@ -338,18 +291,7 @@ export const tiers: Tier[] = [
     name: "Writers Circle",
     monthly: 49,
     desc: "For writers who want the craft and the room.",
-    bg: "var(--surface-card)",
-    border: "1px solid var(--border-1)",
-    shadow: "var(--shadow-xs)",
-    label: "var(--depth)",
-    priceColor: "var(--fg-strong)",
-    perColor: "var(--fg-3)",
-    descColor: "var(--fg-2)",
-    ctaBg: "var(--depth)",
-    ctaColor: "var(--fg-on-dark)",
     cta: "Join Writers Circle",
-    check: "var(--feature)",
-    featColor: "var(--fg-2)",
     featured: false,
     features: ["Everything in Inner", "Craft discussions", "Monthly workshops", "Writing office hours", "25% off editing services"],
   },
@@ -419,8 +361,6 @@ export const memberVoices = [
       "The early chapters ruin me every month and I wouldn’t have it any other way. Reading Forty-Nothing as it unfolds feels like being let in on a secret.",
     name: "Adaeze N.",
     role: "Inner Circle · 2 years",
-    avBg: "var(--accent)",
-    avColor: "var(--fg-on-accent)",
     initial: "A",
   },
   {
@@ -428,8 +368,6 @@ export const memberVoices = [
       "The book club is the only group chat I never mute. We argued about Luke for three weeks straight and I loved every second of it.",
     name: "Renata B.",
     role: "Reader Circle · 1 year",
-    avBg: "var(--feature)",
-    avColor: "var(--st-soft-cream)",
     initial: "R",
   },
   {
@@ -437,8 +375,6 @@ export const memberVoices = [
       "Office hours got my manuscript unstuck after eighteen months. Nia reads like an editor and talks to you like a friend.",
     name: "Camille O.",
     role: "Writers Circle · 8 months",
-    avBg: "var(--depth)",
-    avColor: "var(--st-soft-cream)",
     initial: "C",
   },
 ];
@@ -468,10 +404,11 @@ export const faqs = [
 
 /* ---------- Academy / Writing Studio ---------- */
 export const services = [
+  { name: "First 10 Pages Review", price: "Free", desc: "Send the first ten pages of your manuscript for a focused review of what is working and where the opening could be stronger." },
   { name: "Story Critique", price: "from $150", desc: "A close read of your opening pages or a short, with honest, actionable notes on what’s working and what isn’t." },
   { name: "Manuscript Review", price: "from $600", desc: "A full-manuscript assessment — structure, pacing, character, and voice — delivered as a written editorial letter." },
   { name: "1:1 Coaching", price: "$120 / session", desc: "Work through plot knots, career questions, or accountability, one conversation at a time." },
-  { name: "Development Editing", price: "Custom", desc: "A hands-on editing partnership from outline to final draft, for writers ready to go all the way." },
+  { name: "Developmental Editing", price: "Custom", desc: "A hands-on editing partnership from outline to final draft, for writers ready to go all the way." },
 ];
 
 /* ---------- Serial (Forty-Nothing) ---------- */
@@ -497,12 +434,85 @@ export const readingPaths = [
 ];
 
 export const mostRead = [
-  { rank: "01", title: "Forty-Nothing", meta: "Serial · 4,210 reading now", gradient: COCOA },
-  { rank: "02", title: "Commitment", meta: "Series · 2,980 this month", gradient: CORAL },
-  { rank: "03", title: "Ivy's League", meta: "Standalone · 2,140", gradient: MAUVE },
-  { rank: "04", title: "The Fall", meta: "Commitment #4 · 1,870", gradient: BURNT },
-  { rank: "05", title: "The Broken", meta: "2022 · 1,540", gradient: NAVY },
+  { rank: "01", title: "Forty-Nothing", meta: "Serial · 4,210 reading now", gradient: COCOA, href: "/serial" },
+  { rank: "02", title: "Commitment", meta: "Series · 2,980 this month", gradient: CORAL, href: "/read/commitment" },
+  { rank: "03", title: "Ivy's League", meta: "Standalone · 2,140", gradient: MAUVE, href: "/read/ivys-league" },
+  { rank: "04", title: "The Fall", meta: "Commitment #4 · 1,870", gradient: BURNT, href: "/read/the-fall" },
+  { rank: "05", title: "The Broken", meta: "2022 · 1,540", gradient: NAVY, href: "/read/the-broken" },
 ];
+
+export interface BookDetail {
+  slug: string;
+  title: string;
+  eyebrow: string;
+  description: string;
+  gradient: string;
+  category: string;
+  published: string;
+  readingOrder: string;
+  seriesName?: string;
+  seriesBooks?: string[];
+  bestFor: string[];
+}
+
+export const bookDetails: BookDetail[] = [
+  {
+    slug: "commitment",
+    title: "Commitment",
+    eyebrow: "The Commitment Series",
+    description:
+      "The series that started it all — Riley and Shawn, five books deep. Begin here, then follow the complete Commitment reading order without losing your place.",
+    gradient: CORAL,
+    category: "Series opener",
+    published: "2012",
+    readingOrder: "Book 1 of 5",
+    seriesName: "Commitment",
+    seriesBooks: ["Commitment", "Unsuitable Men", "Maybe Never", "The Fall", "Four"],
+    bestFor: ["New readers", "Series readers", "Relationship-driven fiction"],
+  },
+  {
+    slug: "ivys-league",
+    title: "Ivy's League",
+    eyebrow: "Standalone Novel",
+    description:
+      "A gilded cage, a man beneath her station, and a bond that shouldn’t last. A complete standalone for readers who want one immersive story in a single volume.",
+    gradient: MAUVE,
+    category: "Standalone novel",
+    published: "Available now",
+    readingOrder: "Read in any order",
+    bestFor: ["Standalone readers", "Slow-burn romance", "One-volume stories"],
+  },
+  {
+    slug: "the-fall",
+    title: "The Fall",
+    eyebrow: "The Commitment Series",
+    description:
+      "The fourth novel in the Commitment series. Read the first three books before stepping into this chapter of the larger story.",
+    gradient: BURNT,
+    category: "Series novel",
+    published: "2016",
+    readingOrder: "Book 4 of 5",
+    seriesName: "Commitment",
+    seriesBooks: ["Commitment", "Unsuitable Men", "Maybe Never", "The Fall", "Four"],
+    bestFor: ["Returning readers", "Long-form series", "Continuing character arcs"],
+  },
+  {
+    slug: "the-broken",
+    title: "The Broken",
+    eyebrow: "Standalone Novel",
+    description:
+      "A complete standalone novel from Nia Forrester’s backlist. Start here when you want a full story without committing to a multi-book reading order.",
+    gradient: NAVY,
+    category: "Standalone novel",
+    published: "2022",
+    readingOrder: "Read in any order",
+    bestFor: ["Standalone readers", "Backlist explorers", "Complete stories"],
+  },
+];
+
+export function getBookDetail(slug: string) {
+  return bookDetails.find((book) => book.slug === slug);
+}
 
 export const audiobooks = [
   { title: "Recall", narrator: "Bahni Turpin", duration: "9h 12m", gradient: AMBER },

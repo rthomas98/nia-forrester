@@ -1,73 +1,58 @@
 "use client";
-
-import { createContext, useContext, useSyncExternalStore, ReactNode } from "react";
-
-// localStorage is the source of truth for the mock auth state; a custom event
-// notifies subscribers so useSyncExternalStore re-reads after each write.
-const AUTH_KEY = "nf_authed";
-const AUTH_EVENT = "nf-auth-change";
-
-function subscribeAuth(onChange: () => void) {
-  window.addEventListener(AUTH_EVENT, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(AUTH_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-function readAuthed(): boolean {
-  try {
-    return window.localStorage.getItem(AUTH_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeAuthed(value: boolean) {
-  try {
-    window.localStorage.setItem(AUTH_KEY, value ? "1" : "0");
-  } catch {}
-  window.dispatchEvent(new Event(AUTH_EVENT));
-}
-
+import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { authClient, authIsConfigured } from "@/lib/auth-client";
 interface AuthState {
-  authed: boolean;
-  /** true once client-side state is live (always false during SSR) */
-  ready: boolean;
-  signIn: () => void;
-  signOut: () => void;
+    authed: boolean;
+    ready: boolean;
+    configured: boolean;
+    user: {
+        id: string;
+        name: string;
+        email: string;
+        image?: string | null;
+    } | null;
+    signOut: () => Promise<void>;
 }
-
 const AuthContext = createContext<AuthState>({
-  authed: false,
-  ready: false,
-  signIn: () => {},
-  signOut: () => {},
+    authed: false,
+    ready: false,
+    configured: false,
+    user: null,
+    signOut: async () => { },
 });
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const authed = useSyncExternalStore(subscribeAuth, readAuthed, () => false);
-  const ready = useSyncExternalStore(
-    subscribeAuth,
-    () => true,
-    () => false
-  );
-
-  return (
-    <AuthContext.Provider
-      value={{
-        authed,
-        ready,
-        signIn: () => writeAuthed(true),
-        signOut: () => writeAuthed(false),
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+const unconfiguredAuth: AuthState = {
+    authed: false,
+    ready: true,
+    configured: false,
+    user: null,
+    signOut: async () => { },
+};
+export function AuthProvider({ children }: {
+    children: ReactNode;
+}) {
+    if (!authIsConfigured) {
+        return (<AuthContext.Provider value={unconfiguredAuth}>
+        {children}
+      </AuthContext.Provider>);
+    }
+    return <ConfiguredAuthProvider>{children}</ConfiguredAuthProvider>;
 }
-
+function ConfiguredAuthProvider({ children }: {
+    children: ReactNode;
+}) {
+    const session = authClient.useSession();
+    const user = session.data?.user ?? null;
+    const value = useMemo<AuthState>(() => ({
+        authed: Boolean(user),
+        ready: !session.isPending,
+        configured: authIsConfigured,
+        user,
+        signOut: async () => {
+            await authClient.signOut();
+        },
+    }), [session.isPending, user]);
+    return (<AuthContext.Provider value={value}>{children}</AuthContext.Provider>);
+}
 export function useAuth() {
-  return useContext(AuthContext);
+    return useContext(AuthContext);
 }
