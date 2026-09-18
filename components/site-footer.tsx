@@ -15,7 +15,7 @@ function FooterLink({
     <li>
       <Link
         href={href}
-        className="cursor-pointer text-sm text-[rgba(196,185,203,0.78)] transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
+        className="inline-flex min-h-11 min-w-11 cursor-pointer items-center text-sm text-[rgba(196,185,203,0.78)] transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
       >
         {children}
       </Link>
@@ -61,7 +61,6 @@ export default function SiteFooter() {
               <FooterLink href="/community">Reader Circle</FooterLink>
               <FooterLink href="/events">Events</FooterLink>
               <FooterLink href="/academy">Writing Studio</FooterLink>
-              <FooterLink href="/community">Instagram</FooterLink>
             </ul>
           </div>
           <div>
@@ -69,35 +68,34 @@ export default function SiteFooter() {
             <ul className={linkList}>
               <FooterLink href="/signin">Sign in</FooterLink>
               <FooterLink href="/membership">Membership</FooterLink>
-              <FooterLink href="/membership">Gift a membership</FooterLink>
               <FooterLink href="/contact">Help & contact</FooterLink>
             </ul>
           </div>
         </div>
         <div className="mt-10 flex justify-between border-t border-[rgba(196,185,203,0.12)] pt-6 font-sans text-xs tracking-[0.04em] text-[rgba(196,185,203,0.5)] max-[640px]:flex-col max-[640px]:gap-4">
           <span>© 2026 Nia Forrester</span>
-          <span className="flex flex-wrap gap-3.5">
+          <span className="flex flex-wrap gap-x-3.5 gap-y-1">
             <Link
               href="/privacy"
-              className="cursor-pointer transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
+              className="inline-flex min-h-11 min-w-11 cursor-pointer items-center transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
             >
               Privacy
             </Link>
             <Link
               href="/terms"
-              className="cursor-pointer transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
+              className="inline-flex min-h-11 min-w-11 cursor-pointer items-center transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
             >
               Terms
             </Link>
             <Link
               href="/accessibility"
-              className="cursor-pointer transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
+              className="inline-flex min-h-11 min-w-11 cursor-pointer items-center transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
             >
               Accessibility
             </Link>
             <Link
               href="/contact"
-              className="cursor-pointer transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
+              className="inline-flex min-h-11 min-w-11 cursor-pointer items-center transition-colors duration-150 hover:text-[var(--color-cool-teal)]"
             >
               Contact
             </Link>

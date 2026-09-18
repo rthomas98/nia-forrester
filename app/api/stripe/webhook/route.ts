@@ -54,12 +54,7 @@ export async function POST(request: Request) {
 
   const item = subscription.items.data[0];
   const priceId = item?.price.id;
-  const planKey =
-    (subscription.metadata.planKey as
-      | "reader"
-      | "inner"
-      | "writers"
-      | undefined) ?? (priceId ? tierFromPriceId(priceId) : null);
+  const planKey = priceId ? tierFromPriceId(priceId) : null;
   const authUserId = subscription.metadata.authUserId;
   const customerId =
     typeof subscription.customer === "string"

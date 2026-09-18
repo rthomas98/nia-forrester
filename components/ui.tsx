@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 
 function joinClasses(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -25,6 +26,11 @@ const coverSizes = {
     title: "text-[15px]",
     author: "text-[8px]",
   },
+  featured: {
+    cover: "h-56 w-[152px] p-[13px]",
+    title: "text-[19px]",
+    author: "text-[9px]",
+  },
 } as const;
 
 export function BookCover({
@@ -33,43 +39,59 @@ export function BookCover({
   size = "shelf",
   footer,
   className,
+  src,
+  sizes,
 }: {
   title: string;
   gradient: string;
   size?: keyof typeof coverSizes;
   footer?: ReactNode;
   className?: string;
+  src?: string | null;
+  sizes?: string;
 }) {
   const sizing = coverSizes[size];
 
   return (
     <div
       className={joinClasses(
-        "flex flex-none flex-col justify-between overflow-hidden rounded-[3px] ring-1 ring-white/20 shadow-[0_26px_46px_-22px_rgba(53,5,73,0.52),0_8px_18px_-8px_rgba(53,5,73,0.24)] transition duration-300 ease-out hover:-translate-y-1.5 hover:-rotate-1 hover:scale-[1.02] hover:shadow-[0_34px_54px_-22px_rgba(53,5,73,0.6)]",
+        "relative flex flex-none flex-col justify-between overflow-hidden rounded-[3px] ring-1 ring-white/20 shadow-[0_26px_46px_-22px_rgba(53,5,73,0.52),0_8px_18px_-8px_rgba(53,5,73,0.24)] transition duration-300 ease-out hover:-translate-y-1.5 hover:-rotate-1 hover:scale-[1.02] hover:shadow-[0_34px_54px_-22px_rgba(53,5,73,0.6)]",
         gradient,
         sizing.cover,
         className,
       )}
     >
-      <div
-        className={joinClasses(
-          "font-sans font-semibold uppercase tracking-[0.14em] text-[rgba(196,185,203,0.8)]",
-          sizing.author,
-        )}
-      >
-        Nia Forrester
-      </div>
-      <div>
-        <div
-          className={joinClasses(
-            "font-serif font-medium leading-[1.05] text-[var(--color-brand-surface)]",
-            sizing.title,
-          )}
-        >
-          {title}
-        </div>
-        {footer}
-      </div>
+      {src ? (
+        <Image
+          src={src}
+          alt={`Cover of ${title}`}
+          fill
+          sizes={sizes ?? (size === "featured" ? "152px" : "120px")}
+          className="object-cover"
+        />
+      ) : (
+        <>
+          <div
+            className={joinClasses(
+              "font-sans font-semibold uppercase tracking-[0.14em] text-[rgba(196,185,203,0.8)]",
+              sizing.author,
+            )}
+          >
+            Nia Forrester
+          </div>
+          <div>
+            <div
+              className={joinClasses(
+                "font-serif font-medium leading-[1.05] text-[var(--color-brand-surface)]",
+                sizing.title,
+              )}
+            >
+              {title}
+            </div>
+            {footer}
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -32,7 +32,8 @@ These are account or stakeholder inputs and cannot be safely invented:
 4. Create Stripe products/prices and register the production webhook.
 5. Identify the initial admin email in `ADMIN_EMAILS`.
 6. Provide the replacement hero/About photographs requested during review.
-7. Supply canonical book-cover files, affiliate destinations, audio files or
+7. Confirm production-use rights for the retailer-sourced book covers already
+   mapped into the catalog, and supply affiliate destinations, audio files or
    platform links, full serial/essay text, accurate event dates and ticket
    links, and Writing Studio booking availability.
 8. Export Substack subscriber/content data and confirm which Wix records may be

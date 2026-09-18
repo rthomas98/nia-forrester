@@ -5,14 +5,14 @@ import { ConvexHttpClient } from "convex/browser";
 import { api } from "../convex/_generated/api.js";
 
 const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-const migrationSecret = process.env.MIGRATION_SECRET;
+const authToken = process.env.CONVEX_AUTH_TOKEN;
 const sitemapUrl =
   process.env.LEGACY_SITEMAP_URL ??
   "https://www.niaforrester.com/sitemap.xml";
 
-if (!convexUrl || !migrationSecret) {
+if (!convexUrl || !authToken) {
   console.error(
-    "Set NEXT_PUBLIC_CONVEX_URL and MIGRATION_SECRET before staging legacy content.",
+    "Set NEXT_PUBLIC_CONVEX_URL and CONVEX_AUTH_TOKEN for an editor/admin before staging legacy content.",
   );
   process.exit(1);
 }
@@ -27,6 +27,7 @@ const urls = Array.from(sitemap.matchAll(/<loc>(.*?)<\/loc>/g), (match) =>
 );
 
 const client = new ConvexHttpClient(convexUrl);
+client.setAuth(authToken);
 let jobId;
 let staged = 0;
 let skipped = 0;
@@ -61,7 +62,6 @@ for (let start = 0; start < urls.length; start += 20) {
   );
 
   const result = await client.mutation(api.imports.stageBatch, {
-    migrationSecret,
     source: "wix",
     jobId,
     sourceUrl: sitemapUrl,

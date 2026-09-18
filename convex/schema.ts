@@ -47,20 +47,26 @@ export default defineSchema({
     .index("by_role", ["role"]),
 
   series: defineTable({
+    catalogKey: v.optional(v.string()),
     slug: v.string(),
     title: v.string(),
-    description: v.string(),
+    description: v.optional(v.string()),
     status: publishStatus,
+    visibility: v.optional(
+      v.union(v.literal("public"), v.literal("unlisted"), v.literal("hidden")),
+    ),
     coverStorageId: v.optional(v.id("_storage")),
     coverUrl: v.optional(v.string()),
     sortOrder: v.number(),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_catalog_key", ["catalogKey"])
     .index("by_slug", ["slug"])
     .index("by_status_sort", ["status", "sortOrder"]),
 
   content: defineTable({
+    catalogKey: v.optional(v.string()),
     slug: v.string(),
     kind: v.union(
       v.literal("book"),
@@ -73,9 +79,54 @@ export default defineSchema({
     title: v.string(),
     subtitle: v.optional(v.string()),
     excerpt: v.string(),
+    description: v.optional(v.string()),
     body: v.optional(v.string()),
     seriesId: v.optional(v.id("series")),
+    seriesPosition: v.optional(v.number()),
+    publicationDate: v.optional(v.string()),
+    formats: v.optional(
+      v.array(
+        v.union(
+          v.literal("ebook"),
+          v.literal("paperback"),
+          v.literal("hardcover"),
+          v.literal("audiobook"),
+        ),
+      ),
+    ),
+    editions: v.optional(
+      v.array(
+        v.object({
+          format: v.union(
+            v.literal("ebook"),
+            v.literal("paperback"),
+            v.literal("hardcover"),
+            v.literal("audiobook"),
+          ),
+          asin: v.string(),
+          productUrl: v.string(),
+        }),
+      ),
+    ),
+    asin: v.optional(v.string()),
+    productUrl: v.optional(v.string()),
+    coverAsset: v.optional(
+      v.object({
+        path: v.string(),
+        source: v.union(
+          v.literal("stakeholder_provided"),
+          v.literal("licensed"),
+          v.literal("retailer_source"),
+          v.literal("original"),
+        ),
+        sourceReference: v.optional(v.string()),
+        sha256: v.optional(v.string()),
+      }),
+    ),
     status: publishStatus,
+    visibility: v.optional(
+      v.union(v.literal("public"), v.literal("unlisted"), v.literal("hidden")),
+    ),
     accessTier: membershipTier,
     tags: v.array(v.string()),
     publishedAt: v.optional(v.number()),
@@ -90,6 +141,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_catalog_key", ["catalogKey"])
     .index("by_slug", ["slug"])
     .index("by_kind_status", ["kind", "status"])
     .index("by_status_published", ["status", "publishedAt"])
@@ -118,6 +170,20 @@ export default defineSchema({
     .index("by_content_status", ["contentId", "status"])
     .index("by_slug", ["slug"]),
 
+  avatars: defineTable({
+    authUserId: v.string(),
+    storageId: v.id("_storage"),
+    updatedAt: v.number(),
+  }).index("by_user", ["authUserId"]),
+
+  savedBooks: defineTable({
+    authUserId: v.string(),
+    contentId: v.id("content"),
+    active: v.boolean(),
+    updatedAt: v.number(),
+  }).index("by_user_content", ["authUserId", "contentId"])
+    .index("by_user", ["authUserId"]),
+
   readingProgress: defineTable({
     authUserId: v.string(),
     contentId: v.id("content"),
@@ -134,9 +200,15 @@ export default defineSchema({
     authUserId: v.string(),
     contentId: v.id("content"),
     chapterId: v.optional(v.id("chapters")),
+    position: v.optional(v.number()),
     note: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_user_content", ["authUserId", "contentId"]),
+
+  communityMembers: defineTable({
+    authUserId: v.string(),
+    joinedAt: v.number(),
+  }).index("by_user", ["authUserId"]),
 
   threads: defineTable({
     slug: v.string(),
@@ -218,6 +290,7 @@ export default defineSchema({
     .index("by_user", ["authUserId"]),
 
   events: defineTable({
+    isTest: v.optional(v.boolean()),
     slug: v.string(),
     title: v.string(),
     description: v.string(),
@@ -253,6 +326,11 @@ export default defineSchema({
     .index("by_status_start", ["status", "startsAt"]),
 
   eventRegistrations: defineTable({
+    attendeeName: v.optional(v.string()),
+    attendeeEmail: v.optional(v.string()),
+    attendance: v.optional(v.union(v.literal("in_person"), v.literal("virtual"))),
+    note: v.optional(v.string()),
+    acknowledgedAt: v.optional(v.number()),
     eventId: v.id("events"),
     authUserId: v.string(),
     status: v.union(
@@ -286,6 +364,13 @@ export default defineSchema({
     .index("by_status_sort", ["status", "sortOrder"]),
 
   bookings: defineTable({
+    projectTitle: v.optional(v.string()),
+    genre: v.optional(v.string()),
+    wordCount: v.optional(v.number()),
+    timeline: v.optional(v.string()),
+    sample: v.optional(v.string()),
+    consentedAt: v.optional(v.number()),
+    staffReply: v.optional(v.string()),
     serviceId: v.id("services"),
     authUserId: v.optional(v.string()),
     name: v.string(),
@@ -303,6 +388,20 @@ export default defineSchema({
   })
     .index("by_service_status", ["serviceId", "status"])
     .index("by_auth_user", ["authUserId"]),
+
+  studioCourses: defineTable({
+    title: v.string(), description: v.string(), instructor: v.string(),
+    format: v.union(v.literal("self_paced"), v.literal("live_online"), v.literal("in_person")),
+    level: v.string(), workload: v.string(), outcomes: v.array(v.string()),
+    status: v.union(v.literal("draft"), v.literal("coming_soon"), v.literal("open"), v.literal("closed")),
+    enrollmentUrl: v.optional(v.string()), priceInCents: v.optional(v.number()),
+    startsAt: v.optional(v.number()), timezone: v.optional(v.string()),
+    sortOrder: v.number(), createdAt: v.number(), updatedAt: v.number(),
+  }).index("by_status_sort", ["status", "sortOrder"]),
+  studioInterests: defineTable({
+    authUserId: v.string(), email: v.string(), courseId: v.optional(v.id("studioCourses")),
+    active: v.boolean(), consentedAt: v.number(), updatedAt: v.number(),
+  }).index("by_user", ["authUserId"]),
 
   membershipPlans: defineTable({
     key: membershipTier,
@@ -386,6 +485,7 @@ export default defineSchema({
       v.literal("substack"),
       v.literal("csv"),
       v.literal("manual"),
+      v.literal("catalog"),
     ),
     status: v.union(
       v.literal("queued"),
@@ -408,6 +508,7 @@ export default defineSchema({
   importRecords: defineTable({
     jobId: v.id("importJobs"),
     externalId: v.string(),
+    identity: v.optional(v.string()),
     externalUrl: v.optional(v.string()),
     entityType: v.string(),
     status: v.union(
@@ -423,6 +524,7 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
+    .index("by_identity", ["identity"])
     .index("by_job", ["jobId"])
     .index("by_job_external", ["jobId", "externalId"]),
 

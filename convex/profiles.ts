@@ -13,7 +13,7 @@ const tier = v.union(
 export const current = query({
   args: {},
   handler: async (ctx) => {
-    const user = await authComponent.getAuthUser(ctx);
+    const user = await authComponent.safeGetAuthUser(ctx);
     if (!user) return null;
     const profile = await ctx.db
       .query("profiles")

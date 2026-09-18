@@ -1,230 +1,480 @@
+"use client";
+
+import { useState, type FormEvent, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Avatar, ImageSlot } from "@/components/ui";
-import { communityStats, threads, clubs, circleSessions, reactions, principles, } from "@/lib/data";
-export default function CommunityPage() {
-    return (<main>
-      <section className="[background:var(--color-deep-plum)]">
-        <div className="mx-auto grid max-w-[1240px] grid-cols-[1.05fr_0.95fr] items-center gap-14 px-10 py-16 max-[900px]:grid-cols-1 max-[640px]:px-5 max-[640px]:py-12">
-          <div>
-            <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:16px]">
-              Members only · Connect
-            </div>
-            <h1 className="font-sans [font-weight:700] [font-size:56px] [letter-spacing:-0.03em] [color:var(--color-soft-lavender)] [margin:0_0_14px] [max-width:16ch] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-              The Reader Circle
-            </h1>
-            <p className="[font-size:18px] [line-height:1.6] [color:rgba(196,185,203,0.8)] [max-width:560px] [margin:0_0_28px] text-pretty">
-              A private home for Black women&apos;s fiction. Discussions, book
-              clubs, character debates — the conversations that used to scatter
-              across the comments, finally in one room.
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { QueryBoundary } from "@/components/catalog/query-boundary";
+import { authIsConfigured } from "@/lib/auth-client";
+
+const button =
+  "inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-hot-magenta)] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+const field =
+  "mt-2 block w-full rounded-xl border border-[var(--color-soft-lavender)] bg-white p-3 text-[var(--color-deep-plum)]";
+const card =
+  "rounded-[28px] border border-white/50 bg-[var(--color-brand-surface)] p-6 shadow-sm sm:p-8";
+
+function message(error: unknown) {
+  return error instanceof ConvexError &&
+    typeof error.data === "object" &&
+    error.data &&
+    "message" in error.data
+    ? String(error.data.message)
+    : "We couldn’t complete that request. Please try again.";
+}
+function Panel({ children }: { children: ReactNode }) {
+  return <div className={card}>{children}</div>;
+}
+
+function Discussion({ id, close }: { id: Id<"threads">; close: () => void }) {
+  const discussion = useQuery(api.readerCircle.discussion, { threadId: id });
+  const reply = useMutation(api.community.reply);
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await reply({ threadId: id, body });
+      setBody("");
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Panel>
+      <button type="button" onClick={close} className="mb-5 min-h-11 text-sm font-semibold">
+        ← All Discussions
+      </button>
+      {discussion === undefined ? (
+        <p role="status">Loading discussion…</p>
+      ) : discussion === null ? (
+        <p>This discussion is no longer available.</p>
+      ) : (
+        <>
+          <h2 className="text-2xl font-bold">{discussion.title}</h2>
+          <p className="text-sm opacity-70">{discussion.author}</p>
+          <p className="whitespace-pre-wrap break-words">{discussion.body}</p>
+          <h3 className="mt-8 font-bold">
+            Replies ({discussion.posts.length})
+          </h3>
+          {discussion.posts.length === 0 && (
+            <p>No replies yet. Start the conversation.</p>
+          )}
+          {discussion.posts.map((post) => (
+            <article
+              key={post._id}
+              className="mt-4 border-t border-[var(--color-soft-lavender)] pt-4"
+            >
+              <p className="font-semibold">{post.author}</p>
+              {post.spoilerChapter ? (
+                <details>
+                  <summary className="cursor-pointer">
+                    Spoiler: Chapter {post.spoilerChapter}
+                  </summary>
+                  <p className="whitespace-pre-wrap break-words">{post.body}</p>
+                </details>
+              ) : (
+                <p className="whitespace-pre-wrap break-words">{post.body}</p>
+              )}
+            </article>
+          ))}
+          {discussion.status === "open" && (
+            <form onSubmit={submit} className="mt-6">
+              <label className="font-semibold">
+                Your Reply
+                <textarea
+                  className={field}
+                  required
+                  maxLength={10000}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={busy || !body.trim()}
+                className={`${button} mt-4`}
+              >
+                {busy ? "Posting…" : "Post Reply"}
+              </button>
+            </form>
+          )}
+          {error && <p role="alert">{error}</p>}
+        </>
+      )}
+    </Panel>
+  );
+}
+
+function MemberRoom() {
+  const discussions = useQuery(api.readerCircle.discussions);
+  const clubs = useQuery(api.readerCircle.clubs);
+  const sessions = useQuery(api.readerCircle.sessions);
+  const create = useMutation(api.community.createThread);
+  const joinClub = useMutation(api.readerCircle.joinClub);
+  const [selected, setSelected] = useState<Id<"threads"> | null>(null);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const id = await create({ title, body, tags: [] });
+      setTitle("");
+      setBody("");
+      setSelected(id);
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function join(id: Id<"clubs">) {
+    setBusy(true);
+    setError("");
+    try {
+      await joinClub({ clubId: id });
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
+      <div className="min-w-0 space-y-6">
+        {selected ? (
+          <Discussion id={selected} close={() => setSelected(null)} />
+        ) : (
+          <>
+            <Panel>
+              <h2 className="text-2xl font-bold">Active Discussions</h2>
+              {discussions === undefined ? (
+                <p role="status">Loading discussions…</p>
+              ) : discussions.length === 0 ? (
+                <p>
+                  No discussions yet. Share the first reading thought with the
+                  Circle.
+                </p>
+              ) : (
+                discussions.map((d) => (
+                  <button
+                    type="button"
+                    key={d._id}
+                    onClick={() => setSelected(d._id)}
+                    className="block w-full break-words border-t border-[var(--color-soft-lavender)] py-5 text-left"
+                  >
+                    <span className="block text-lg font-semibold">
+                      {d.title}
+                    </span>
+                    <span className="text-sm opacity-70">
+                      {d.author} · {d.replies} replies
+                    </span>
+                  </button>
+                ))
+              )}
+            </Panel>
+            <Panel>
+              <h2 className="text-xl font-bold">Start a Discussion</h2>
+              <form onSubmit={submit} className="space-y-4">
+                <label className="block">
+                  Title
+                  <input
+                    className={field}
+                    required
+                    maxLength={160}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  Your Message
+                  <textarea
+                    className={field}
+                    required
+                    maxLength={10000}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className={button}
+                  disabled={busy || !title.trim() || !body.trim()}
+                >
+                  {busy ? "Posting…" : "Post Discussion"}
+                </button>
+              </form>
+            </Panel>
+          </>
+        )}
+        {error && (
+          <p role="alert" className={card}>
+            {error}
+          </p>
+        )}
+      </div>
+      <div className="min-w-0 space-y-6">
+        <Panel>
+          <h2 className="text-2xl font-bold">Book Clubs</h2>
+          {clubs === undefined ? (
+            <p role="status">Loading clubs…</p>
+          ) : clubs.length === 0 ? (
+            <p>
+              No book clubs have opened yet. New clubs will appear here when
+              they’re ready.
             </p>
-            <Link href="/membership" className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 inline-block [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-              Become a member ↗
-            </Link>
-            <div className="flex items-center [gap:14px] [margin-top:32px]">
-              <div className="flex">
-                <Avatar initials="TR" color="bg-[var(--color-deep-plum)]" size="sm" className="border-2 border-[var(--color-deep-plum)]"/>
-                <Avatar initials="IK" color="bg-[var(--color-hot-magenta)]" size="sm" className="-ml-[9px] border-2 border-[var(--color-deep-plum)]"/>
-                <Avatar initials="DW" color="bg-[var(--color-cool-teal)]" size="sm" className="-ml-[9px] border-2 border-[var(--color-deep-plum)] text-[var(--color-deep-plum)]"/>
-                <Avatar initials="RB" color="bg-[var(--color-cool-teal)]" size="sm" className="-ml-[9px] border-2 border-[var(--color-deep-plum)] text-[var(--color-deep-plum)]"/>
-              </div>
-              <span className="font-sans [font-size:13px] [font-weight:500] [color:rgba(196,185,203,0.72)]">
-                1,240 readers already in the room
-              </span>
-            </div>
-          </div>
-          <div className="relative [padding:16px_16px_0_0]">
-            <span className="absolute [top:0px] [right:0px] [left:16px] [bottom:16px] [border-radius:28px] [border:1px_solid_rgba(196,185,203,0.22)]"></span>
-            <ImageSlot label="Drop a reader-community photo" className="relative [z-index:1] block w-full [height:380px] [border-radius:28px] [box-shadow:0_28px_56px_-16px_rgba(53,5,73,0.18),0_8px_16px_rgba(53,5,73,0.06)] [background:rgba(103,160,175,0.10)]"/>
-            <div className="absolute [left:-24px] [bottom:36px] [z-index:3] [background:var(--color-brand-surface)] [border-radius:16px] [padding:14px_16px] [box-shadow:0_28px_56px_-16px_rgba(53,5,73,0.18),0_8px_16px_rgba(53,5,73,0.06)] [max-width:270px] flex [gap:11px] items-start">
-              <Avatar initials="TR" color="bg-[var(--color-deep-plum)]" size="sm" className="size-8"/>
-              <div>
-                <div className="font-sans [font-weight:600] [font-size:12px] [color:var(--color-deep-plum)]">
-                  Tasha R.{" "}
-                  <span className="[color:var(--color-plum-faint)] [font-weight:500]">
-                    · in Ch. 11
-                  </span>
-                </div>
-                <div className="font-serif [font-style:italic] [font-size:13.5px] [line-height:1.45] [color:var(--color-plum-copy)] [margin-top:3px]">
-                  &ldquo;The drawer line. I gasped.&rdquo;
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+          ) : (
+            clubs.map((club) => (
+              <article
+                key={club._id}
+                className="border-t border-[var(--color-soft-lavender)] py-4"
+              >
+                <h3 className="font-bold">{club.name}</h3>
+                <p>{club.description}</p>
+                <p className="text-sm">{club.members} members</p>
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy || club.joined || !club.eligible}
+                  onClick={() => void join(club._id)}
+                >
+                  {club.joined
+                    ? "Joined"
+                    : club.eligible
+                      ? "Join Club"
+                      : "Higher Membership Required"}
+                </button>
+              </article>
+            ))
+          )}
+        </Panel>
+        <Panel>
+          <h2 className="text-2xl font-bold">Upcoming Circle Sessions</h2>
+          {sessions === undefined ? (
+            <p role="status">Loading sessions…</p>
+          ) : sessions.length === 0 ? (
+            <p>No sessions are scheduled yet.</p>
+          ) : (
+            sessions.map((session) => (
+              <p key={session._id}>
+                <Link className="underline" href="/events">
+                  {session.title}
+                </Link>
+                <span className="block text-sm">
+                  {new Date(session.startsAt).toLocaleDateString()}
+                </span>
+              </p>
+            ))
+          )}
+        </Panel>
+      </div>
+    </div>
+  );
+}
 
-      <section className="max-[640px]:px-5 [max-width:1240px] [margin:0_auto] [padding:36px_40px_0]">
-        <div className="[border-top:1px_solid_rgba(53,5,73,0.85)] [border-bottom:1px_solid_rgba(53,5,73,0.08)] [padding:26px_6px] grid [grid-template-columns:repeat(4,1fr)] max-[900px]:grid-cols-1">
-          {communityStats.map((st) => (<div key={st.label} className="flex items-baseline [gap:12px] [border-left:1px_solid_rgba(53,5,73,0.08)] [padding-left:24px]">
-              <span className="font-serif [font-style:italic] [font-weight:500] [font-size:36px] [color:var(--color-deep-plum)] [line-height:1]">
-                {st.num}
-              </span>
-              <span className="font-sans [font-size:11px] [letter-spacing:0.14em] uppercase [color:var(--color-plum-muted)] [font-weight:600]">
-                {st.label}
-              </span>
-            </div>))}
-        </div>
-      </section>
-
-      <section className="max-[640px]:px-5 [max-width:1240px] [margin:0_auto] [padding:56px_40px] grid [grid-template-columns:1.5fr_1fr] [gap:48px] [align-items:start] max-[900px]:grid-cols-1">
-        <div>
-          <div className="flex items-center justify-between [margin:0_0_18px]">
-            <h2 className="font-sans [font-weight:700] [font-size:30px] [letter-spacing:-0.02em] [color:var(--color-deep-plum)] [margin:0px] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
-              Active discussions
-            </h2>
-            <span className="inline-flex items-center [gap:7px] font-sans [font-weight:600] [font-size:12px] [color:var(--color-plum-muted)]">
-              <span className="[width:7px] [height:7px] [border-radius:999px] [background:var(--color-cool-teal)] [animation:nfPulse_2.4s_ease-in-out_infinite]"></span>
-              212 online now
+function ConnectedCommunity() {
+  const { isLoading } = useConvexAuth();
+  const overview = useQuery(api.readerCircle.overview, isLoading ? "skip" : {});
+  const join = useMutation(api.readerCircle.join);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function enter() {
+    setBusy(true);
+    setError("");
+    try {
+      await join({});
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <div
+        className="grid grid-cols-3 gap-3 border-y border-[var(--color-deep-plum)]/15 py-7 text-center"
+        aria-label="Community statistics"
+      >
+        {[
+          { label: "Members", value: overview?.members },
+          { label: "Discussions", value: overview?.threads },
+          { label: "Book Clubs", value: overview?.clubs },
+        ].map((stat) => (
+          <div key={stat.label}>
+            <span className="block font-serif text-4xl">
+              {stat.value === undefined ? "—" : stat.value.toLocaleString()}
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              {stat.label}
             </span>
           </div>
-          <div className="[background:var(--color-brand-surface)] [border-radius:22px] [box-shadow:0_1px_2px_rgba(53,5,73,0.04)] overflow-hidden">
-            {threads.map((t) => (<article key={t.title} className="flex cursor-pointer items-center gap-[18px] border-t border-[rgba(53,5,73,0.08)] px-6 py-5 transition-colors duration-150 hover:bg-[var(--color-soft-lavender)]/50 max-[640px]:items-start max-[640px]:gap-3 max-[640px]:p-[18px]">
-                <Avatar initials={t.initials} color={t.avatarColor}/>
-                <div className="[flex:1] [min-width:0px]">
-                  <h3 className="font-sans [font-weight:600] [font-size:17px] [line-height:1.3] [color:var(--color-deep-plum)] [margin:0_0_5px]">
-                    {t.title}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-2 text-[13px] text-[var(--color-plum-muted)] max-[640px]:gap-y-1">
-                    <span className="font-sans [font-size:11px] [letter-spacing:0.08em] uppercase [color:var(--color-hot-magenta)] [font-weight:700]">
-                      {t.tag}
-                    </span>
-                    <span className="[width:3px] [height:3px] [border-radius:999px] [background:var(--color-plum-faint)]"></span>
-                    <span>{t.author}</span>
-                    <span className="[width:3px] [height:3px] [border-radius:999px] [background:var(--color-plum-faint)]"></span>
-                    <span>{t.when}</span>
-                    {t.pinned && (<span className="inline-flex items-center [gap:4px] font-sans [font-size:10px] [letter-spacing:0.08em] uppercase [color:var(--color-cool-teal)] [font-weight:700]">
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 17v5"></path>
-                          <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"></path>
-                        </svg>
-                        Pinned
-                      </span>)}
-                  </div>
-                </div>
-                <div className="flex-none flex items-center [gap:6px] [color:var(--color-plum-muted)]">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
-                  </svg>
-                  <span className="font-sans [font-weight:600] [font-size:14px]">
-                    {t.count}
-                  </span>
-                </div>
-              </article>))}
-          </div>
-        </div>
-        <div>
-          <h2 className="font-sans [font-weight:700] [font-size:30px] [letter-spacing:-0.02em] [color:var(--color-deep-plum)] [margin:0_0_18px] [padding-top:5px] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
-            Book clubs
-          </h2>
-          <div className="flex flex-col [gap:14px]">
-            {clubs.map((c) => (<article key={c.name} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer [border-radius:20px] [box-shadow:0_1px_2px_rgba(53,5,73,0.04)] [background:var(--color-brand-surface)] [padding:20px_22px] flex [gap:16px] items-start">
-                <span className={`mt-[5px] size-3 flex-none rounded-full ${c.gradient}`}></span>
-                <div className="[flex:1]">
-                  <div className="flex items-baseline justify-between [gap:12px]">
-                    <h3 className="font-sans [font-weight:700] [font-size:17px] [letter-spacing:-0.01em] [color:var(--color-deep-plum)] [margin:0_0_5px]">
-                      {c.name}
-                    </h3>
-                    <span className="whitespace-nowrap font-sans [font-size:11px] [letter-spacing:0.06em] uppercase [color:var(--color-plum-muted)] [font-weight:600]">
-                      {c.members}
-                    </span>
-                  </div>
-                  <p className="[font-size:13.5px] [line-height:1.5] [color:var(--color-plum-copy)] [margin:0px] text-pretty">
-                    {c.desc}
-                  </p>
-                </div>
-              </article>))}
-            <Link href="/membership" className="transition duration-150 hover:border-[var(--color-plum-copy)] hover:bg-black/5 inline-block text-center [background:transparent] [color:var(--color-deep-plum)] [border:1px_solid_rgba(53,5,73,0.16)] [padding:13px_22px] [border-radius:999px] font-sans [font-weight:600] [font-size:14px]">
-              Start a club with membership
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="max-[640px]:px-5 [max-width:1240px] [margin:0_auto] [padding:24px_40px_8px]">
-        <div className="flex items-end justify-between [margin-bottom:24px]">
-          <div>
-            <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)]">
-              Live together
-            </div>
-            <h2 className="font-sans [font-weight:700] [font-size:30px] [letter-spacing:-0.02em] [color:var(--color-deep-plum)] [margin:8px_0_0] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
-              This week in the Circle
+        ))}
+      </div>
+      <div className="mt-8">
+        {!overview ? (
+          <Panel>
+            <p role="status">Loading the Reader Circle…</p>
+          </Panel>
+        ) : overview.access === "member" ? (
+          <MemberRoom />
+        ) : (
+          <Panel>
+            <h2 className="text-2xl font-bold">
+              {overview.access === "eligible"
+                ? "Your Place in the Circle Is Ready"
+                : "A Space for Paid Members"}
             </h2>
+            <p>
+              {overview.members === 0
+                ? "The Circle is just beginning. There are no members yet. "
+                : ""}
+              {overview.access === "eligible"
+                ? "Join to take part in private discussions and book clubs."
+                : "An active paid membership is required to join, read discussions, and participate in book clubs. A free account does not include community access."}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {overview.access === "eligible" ? (
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy}
+                  onClick={() => void enter()}
+                >
+                  {busy ? "Joining…" : "Join the Circle"}
+                </button>
+              ) : (
+                <>
+                  <Link className={button} href="/membership">
+                    Explore Paid Memberships
+                  </Link>
+                  {overview.access === "anonymous" && (
+                    <Link
+                      className="inline-flex min-h-11 items-center px-4 font-semibold underline"
+                      href="/signin"
+                    >
+                      Already a Member? Sign In
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+            {error && <p role="alert">{error}</p>}
+          </Panel>
+        )}
+      </div>
+    </>
+  );
+}
+
+export default function CommunityPage() {
+  return (
+    <main className="text-[var(--color-deep-plum)]">
+      <section className="bg-[var(--color-deep-plum)] text-[var(--color-soft-lavender)]">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-12 px-5 py-12 sm:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-hot-magenta)]">
+              Paid Members · Connect
+            </p>
+            <h1 className="my-5 text-4xl font-bold tracking-tight sm:text-5xl">
+              The Reader Circle
+            </h1>
+            <p className="max-w-xl text-lg leading-relaxed">
+              A private home for Black women&apos;s fiction. Book clubs,
+              character debates, and conversations that stay with you long after
+              the last page.
+            </p>
+            <a href="#circle" className={`${button} mt-5`}>
+              Find Your Place ↗
+            </a>
           </div>
-          <Link href="/events" className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:14px] [color:var(--color-plum-copy)]">
-            All events
-          </Link>
-        </div>
-        <div className="grid [grid-template-columns:repeat(3,1fr)] [gap:18px] max-[900px]:grid-cols-1">
-          {circleSessions.map((s) => (<Link key={s.title} href="/events" className="transition duration-200 ease-out hover:-translate-y-0.5 hover:shadow-xl cursor-pointer [background:var(--color-brand-surface)] [border-radius:22px] [padding:24px] [box-shadow:0_4px_12px_rgba(53,5,73,0.06)] flex [gap:18px] items-start">
-              <div className="flex-none [width:58px] text-center [background:var(--color-cool-teal)] [border-radius:14px] [padding:10px_0]">
-                <div className={`font-sans text-[11px] font-bold uppercase tracking-[0.1em] ${s.accent}`}>
-                  {s.mon}
-                </div>
-                <div className="font-sans [font-weight:700] [font-size:24px] [color:var(--color-deep-plum)] [line-height:1] [margin-top:2px]">
-                  {s.day}
-                </div>
-              </div>
-              <div className="[flex:1]">
-                <div className={`mb-1.5 font-sans text-[11px] font-bold uppercase tracking-[0.1em] ${s.accent}`}>
-                  {s.type}
-                </div>
-                <h3 className="font-sans [font-weight:600] [font-size:17px] [line-height:1.25] [color:var(--color-deep-plum)] [margin:0_0_8px]">
-                  {s.title}
-                </h3>
-                <div className="font-sans [font-size:12px] [letter-spacing:0.04em] [color:var(--color-plum-muted)]">
-                  {s.where} · {s.host}
-                </div>
-              </div>
-            </Link>))}
+          <div className="relative pt-4 pr-4">
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 bottom-4 left-4 rounded-[28px] border border-[var(--color-soft-lavender)]/25"
+            />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[28px]">
+              <Image
+                src="/images/reader-circle.png"
+                alt="An imagined book-club gathering of four women sharing a novel and conversation"
+                fill
+                priority
+                sizes="(max-width: 1023px) 100vw, 540px"
+                className="object-cover"
+              />
+            </div>
+          </div>
         </div>
       </section>
-
-      <section className="max-[640px]:px-5 [max-width:1240px] [margin:0_auto] [padding:56px_40px_24px]">
-        <div className="text-center [max-width:600px] [margin:0_auto_36px]">
-          <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:14px]">
-            From the margins
-          </div>
-          <h2 className="font-sans [font-weight:700] [font-size:clamp(30px,3.4vw,40px)] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0px] [line-height:1.06] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
-            What the Circle is saying right now
-          </h2>
-        </div>
-        <div className="grid [grid-template-columns:repeat(3,1fr)] [gap:20px] max-[900px]:grid-cols-1">
-          {reactions.map((r) => (<article key={r.name} className="[border-top:2px_solid_rgba(53,5,73,0.85)] [padding:26px_6px_0] flex flex-col [gap:20px]">
-              <p className="font-serif [font-style:italic] [font-weight:500] [font-size:19px] [line-height:1.55] [color:var(--color-deep-plum)] [margin:0px] [flex:1] text-pretty">
-                &ldquo;{r.quote}&rdquo;
-              </p>
-              <div className="flex items-center [gap:12px]">
-                <Avatar initials={r.initials} color={r.color} className="text-sm"/>
-                <div className="font-sans [font-weight:600] [font-size:15px] [color:var(--color-deep-plum)]">
-                  {r.name}
-                </div>
-              </div>
-            </article>))}
-        </div>
-      </section>
-
-      <section className="max-[640px]:px-5 [max-width:1240px] [margin:0_auto] [padding:40px_40px_64px]">
-        <div className="[background:var(--color-cool-teal)] [border-radius:36px] [padding:clamp(36px,4vw,52px)]">
-          <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-deep-plum)] [margin-bottom:8px]">
-            House rules
-          </div>
-          <h2 className="font-sans [font-weight:700] [font-size:clamp(28px,3.2vw,36px)] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_32px] text-balance max-sm:text-[clamp(1.875rem,9vw,2.625rem)]">
-            How we read together
-          </h2>
-          <div className="grid [grid-template-columns:repeat(3,1fr)] [gap:32px] max-[900px]:grid-cols-1">
-            {principles.map((p) => (<div key={p.num}>
-                <div className="font-serif [font-style:italic] [font-weight:500] [font-size:34px] [color:var(--color-hot-magenta)] [line-height:1] [margin-bottom:14px]">
-                  {p.num}
-                </div>
-                <h3 className="font-sans [font-weight:700] [font-size:19px] [letter-spacing:-0.01em] [color:var(--color-deep-plum)] [margin:0_0_8px]">
-                  {p.title}
-                </h3>
-                <p className="[font-size:14px] [line-height:1.6] [color:rgba(53,5,73,0.72)] [margin:0px] text-pretty">
-                  {p.desc}
+      <section
+        id="circle"
+        className="mx-auto max-w-[1240px] scroll-mt-8 px-5 py-10 sm:px-10"
+      >
+        {!authIsConfigured ? (
+          <Panel>
+            <h2 className="text-xl font-bold">
+              The Circle Is Temporarily Unavailable
+            </h2>
+            <p>
+              Membership information couldn’t be loaded. Please check back
+              shortly.
+            </p>
+          </Panel>
+        ) : (
+          <QueryBoundary
+            fallback={(_error, retry) => (
+              <Panel>
+                <h2 className="text-xl font-bold">
+                  We Couldn’t Load the Circle
+                </h2>
+                <p>
+                  Check your connection and membership status, then try again.
                 </p>
-              </div>))}
+                <button type="button" className={button} onClick={retry}>
+                  Try Again
+                </button>
+              </Panel>
+            )}
+          >
+            <ConnectedCommunity />
+          </QueryBoundary>
+        )}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold">How We Read Together</h2>
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                title: "Keep Spoilers Behind the Cut",
+                body: "Name the chapter before sharing a spoiler. Everyone reads at her own pace.",
+              },
+              {
+                title: "Discuss the Book with Care",
+                body: "Strong opinions are welcome. Treat every reader with respect.",
+              },
+              {
+                title: "Make Room for Each Other",
+                body: "Listen closely, share thoughtfully, and welcome new voices.",
+              },
+            ].map((rule) => (
+              <div key={rule.title}>
+                <h3 className="font-bold">{rule.title}</h3>
+                <p>{rule.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-    </main>);
+    </main>
+  );
 }

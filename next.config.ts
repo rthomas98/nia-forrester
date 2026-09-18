@@ -3,6 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   poweredByHeader: false,
+  async redirects() {
+    return [{
+      source: "/read/ivys-league-b015n7gnx2",
+      destination: "/read/ivy-s-league-b015n7gnx2",
+      permanent: true,
+    }];
+  },
   async headers() {
     return [
       {

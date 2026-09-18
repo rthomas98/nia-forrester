@@ -9,6 +9,7 @@ import { completeReaderProfile } from "@/app/signup/actions";
 export default function SignUpPage() {
     const params = useSearchParams();
     const signupTier = params.get("tier") ?? "Reader Circle";
+    const cadence = params.get("cadence") === "annual" ? "annual" : "monthly";
     const { configured } = useAuth();
     const [step, setStep] = useState(1);
     const [prefs, setPrefs] = useState<string[]>([]);
@@ -99,7 +100,7 @@ export default function SignUpPage() {
             const response = await fetch("/api/stripe/checkout", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tier: paidTier, cadence: "monthly" }),
+                body: JSON.stringify({ tier: paidTier, cadence }),
             });
             if (!response.ok) {
                 const result = (await response.json()) as {
@@ -144,7 +145,7 @@ export default function SignUpPage() {
             Create your account
           </h1>
           <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_28px] text-pretty">
-            Two minutes, and every chapter is yours.
+            Create an account to build your reading library.
           </p>
 
           <div className="flex items-center justify-between [gap:16px] [background:var(--color-cool-teal)] [border-radius:18px] [padding:16px_20px] [margin-bottom:24px]">
@@ -215,13 +216,13 @@ export default function SignUpPage() {
           <div className="flex items-center justify-between [gap:16px] [background:var(--color-brand-surface)] [border-radius:18px] [padding:16px_20px] [margin-bottom:32px]">
             <div>
               <div className="font-sans [font-weight:600] [font-size:14px] [color:var(--color-deep-plum)]">
-                Tuesday chapter alerts
+                Chapter alerts
               </div>
               <div className="[font-size:13px] [color:var(--color-plum-muted)] [margin-top:2px]">
-                One email when a new chapter drops. Nothing else.
+                Save your preference for chapter updates.
               </div>
             </div>
-            <button type="button" onClick={() => setAlerts((a) => !a)} aria-pressed={alerts} aria-label="Toggle Tuesday chapter alerts" className={`relative h-[26px] w-[46px] flex-none rounded-full transition-colors duration-150 ${alerts ? "bg-[var(--color-hot-magenta)]" : "bg-[rgba(53,5,73,0.16)]"}`}>
+            <button type="button" onClick={() => setAlerts((a) => !a)} aria-pressed={alerts} aria-label="Toggle Chapter alerts" className={`relative h-[26px] w-[46px] flex-none rounded-full transition-colors duration-150 ${alerts ? "bg-[var(--color-hot-magenta)]" : "bg-[rgba(53,5,73,0.16)]"}`}>
               <span className={`absolute top-[3px] size-5 rounded-full bg-white shadow-sm transition-[left] duration-150 ${alerts ? "left-[23px]" : "left-[3px]"}`}></span>
             </button>
           </div>
@@ -254,11 +255,7 @@ export default function SignUpPage() {
               {signupTier}
             </strong>{" "}
             account is ready. If you selected a paid Circle, checkout is the
-            next step. Chapter 11 of{" "}
-            <em className="font-serif [font-style:normal]">
-              Forty-Nothing
-            </em>{" "}
-            is waiting.
+            next step. Explore the library when you’re ready.
           </p>
           <div className="flex [gap:12px] justify-center flex-wrap">
             {paidTier ? (<button type="button" onClick={startCheckout} disabled={pending} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_28px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">

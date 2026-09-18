@@ -22,10 +22,11 @@ export const mySubscription = query({
   args: {},
   handler: async (ctx) => {
     const user = await requireAuth(ctx);
-    return ctx.db
+    const subscriptions = await ctx.db
       .query("subscriptions")
       .withIndex("by_auth_user", (q) => q.eq("authUserId", user._id))
-      .unique();
+      .collect();
+    return subscriptions.find(s => ["active", "trialing", "past_due", "unpaid", "paused"].includes(s.status)) ?? subscriptions.sort((a, b) => b.updatedAt - a.updatedAt)[0] ?? null;
   },
 });
 

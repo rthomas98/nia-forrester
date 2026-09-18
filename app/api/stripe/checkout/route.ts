@@ -53,6 +53,10 @@ export async function POST(request: Request) {
   }
 
   try {
+    const subscription = await fetchAuthQuery(api.billing.mySubscription);
+    if (subscription && ["active", "trialing", "past_due", "unpaid", "paused"].includes(subscription.status)) {
+      return NextResponse.json({ error: "You already have a membership. Use Manage Existing Membership to review billing." }, { status: 409 });
+    }
     const stripe = getStripe();
     const priceId = getPriceId(input.tier, input.cadence);
     const checkout = await stripe.checkout.sessions.create({
@@ -62,7 +66,7 @@ export async function POST(request: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
       billing_address_collection: "auto",
-      success_url: `${siteUrl}/dashboard?membership=success`,
+      success_url: `${siteUrl}/community?membership=success`,
       cancel_url: `${siteUrl}/membership?checkout=canceled`,
       metadata: {
         authUserId: user._id,

@@ -8,14 +8,18 @@ import { query } from "./_generated/server";
 import authConfig from "./auth.config";
 import { authEmailTemplate, sendTransactionalEmail } from "./email";
 
-const siteUrl = process.env.SITE_URL ?? "http://localhost:3000";
-
 export const authComponent = createClient<DataModel>(components.betterAuth);
 
-export const createAuth = (ctx: GenericCtx<DataModel>) =>
-  betterAuth({
+export const createAuth = (ctx: GenericCtx<DataModel>) => {
+  const siteUrl = process.env.SITE_URL;
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!siteUrl || !secret) {
+    throw new Error("Authentication is not configured: SITE_URL and BETTER_AUTH_SECRET are required");
+  }
+  return betterAuth({
     appName: "Nia Forrester Reader Hub",
     baseURL: siteUrl,
+    secret,
     trustedOrigins: [siteUrl],
     database: authComponent.adapter(ctx),
     emailAndPassword: {
@@ -65,8 +69,9 @@ export const createAuth = (ctx: GenericCtx<DataModel>) =>
       convex({ authConfig }),
     ],
   });
+};
 
 export const getCurrentUser = query({
   args: {},
-  handler: async (ctx) => authComponent.getAuthUser(ctx),
+  handler: async (ctx) => authComponent.safeGetAuthUser(ctx),
 });

@@ -1,12 +1,17 @@
 import type { MutationCtx, QueryCtx } from "./_generated/server";
+import { ConvexError } from "convex/values";
 import { authComponent } from "./auth";
+import { canWriteCatalog } from "./catalogPolicy";
 
 type AppCtx = QueryCtx | MutationCtx;
 
 export async function requireAuth(ctx: AppCtx) {
-  const user = await authComponent.getAuthUser(ctx);
+  const user = await authComponent.safeGetAuthUser(ctx);
   if (!user) {
-    throw new Error("Authentication required");
+    throw new ConvexError({
+      code: "UNAUTHENTICATED",
+      message: "Authentication required",
+    });
   }
   return user;
 }
@@ -26,7 +31,21 @@ export async function requireRole(
 ) {
   const { user, profile } = await getProfile(ctx);
   if (!profile || !roles.includes(profile.role as (typeof roles)[number])) {
-    throw new Error("You do not have permission to perform this action");
+    throw new ConvexError({
+      code: "FORBIDDEN",
+      message: "You do not have permission to perform this action",
+    });
+  }
+  return { user, profile };
+}
+
+export async function requireCatalogWriter(ctx: AppCtx) {
+  const { user, profile } = await getProfile(ctx);
+  if (!profile || !canWriteCatalog(profile.role)) {
+    throw new ConvexError({
+      code: "FORBIDDEN",
+      message: "Catalog changes require the editor or admin role",
+    });
   }
   return { user, profile };
 }

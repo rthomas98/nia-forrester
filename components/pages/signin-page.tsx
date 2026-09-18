@@ -140,32 +140,7 @@ export default function SignInPage() {
               The Reader Circle
             </span>
           </div>
-          <blockquote className="[margin:0px]">
-            <p className="font-serif [font-style:italic] [font-weight:500] [font-size:clamp(24px,2.4vw,32px)] [line-height:1.4] [color:var(--color-soft-lavender)] [margin:0_0_24px] text-pretty">
-              &ldquo;I came for the books. I stayed because Tuesday chapter drops turned
-              into the best group chat I&apos;ve ever been in.&rdquo;
-            </p>
-            <footer className="flex items-center [gap:12px]">
-              <div className="flex-none [width:42px] [height:42px] [border-radius:999px] [background:var(--color-hot-magenta)] [color:var(--color-soft-lavender)] flex items-center justify-center font-sans [font-weight:700] [font-size:13px]">
-                IK
-              </div>
-              <div>
-                <div className="font-sans [font-weight:600] [font-size:14px] [color:var(--color-soft-lavender)]">
-                  Imani K.
-                </div>
-                <div className="font-sans [font-size:12px] [color:rgba(196,185,203,0.6)]">
-                  Member since 2023 · 112 threads
-                </div>
-              </div>
-            </footer>
-          </blockquote>
-          <div className="flex items-center [gap:12px] font-sans [font-size:13px] [font-weight:500] [color:rgba(196,185,203,0.65)]">
-            <span>46 books</span>
-            <span className="[width:3px] [height:3px] [border-radius:999px] [background:rgba(196,185,203,0.4)]"/>
-            <span>1,240 readers</span>
-            <span className="[width:3px] [height:3px] [border-radius:999px] [background:rgba(196,185,203,0.4)]"/>
-            <span>New chapters weekly</span>
-          </div>
+          <p className="text-xl text-[var(--color-soft-lavender)]">Sign in to manage your library, membership, and studio requests.</p>
         </div>
       </div>
     </main>);

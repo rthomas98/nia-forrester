@@ -2,7 +2,7 @@
 
 The base is codex/reader-hub-launch, which includes the full reader hub beyond main. Local disk-maintenance changes remain in the primary checkout; they are not copied into workers.
 
-Codex GPT-6 Astra medium Standard owns backend/integration. Fable 5.1 medium owns frontend/design. Use Manual permissions and reciprocal review of exact final revisions.
+Codex GPT-5.6 Sol medium Standard owns backend/integration. Fable 5.1 medium owns frontend/design. Use Manual permissions and reciprocal review of exact final revisions.
 
 ## Preparation
 

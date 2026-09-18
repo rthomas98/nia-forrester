@@ -64,7 +64,7 @@ export default async function RootLayout({ children, }: Readonly<{
                 <SiteFooter />
               </div>
             </div>
-            <Analytics />
+            {process.env.VERCEL ? <Analytics /> : null}
           </AuthProvider>
         </ConvexClientProvider>
       </body>
