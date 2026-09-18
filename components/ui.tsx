@@ -1,180 +1,144 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import Image from "next/image";
 
-/**
- * A stylized book cover — gradient background, author line on top,
- * italic serif title at the bottom. Sizes vary across the site so
- * width/height and font sizes are passed in.
- */
+function joinClasses(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
+
+const coverSizes = {
+  path: {
+    cover: "h-[124px] w-[84px] p-[10px_9px]",
+    title: "text-[13px]",
+    author: "text-[7px]",
+  },
+  shelf: {
+    cover: "h-[194px] w-[132px] p-[13px_11px]",
+    title: "text-[17px]",
+    author: "text-[8px]",
+  },
+  progress: {
+    cover: "h-[152px] w-[104px] p-[12px_10px]",
+    title: "text-[16px]",
+    author: "text-[8px]",
+  },
+  library: {
+    cover: "h-[176px] w-[120px] p-[12px_10px]",
+    title: "text-[15px]",
+    author: "text-[8px]",
+  },
+  featured: {
+    cover: "h-56 w-[152px] p-[13px]",
+    title: "text-[19px]",
+    author: "text-[9px]",
+  },
+} as const;
+
 export function BookCover({
   title,
   gradient,
-  width,
-  height,
-  titleSize,
-  authorSize = 8,
-  padding = "13px 11px",
-  radius = 2,
+  size = "shelf",
   footer,
-  style,
-  className = "nf-cover-hover",
+  className,
+  src,
+  sizes,
 }: {
   title: string;
   gradient: string;
-  width: number;
-  height: number;
-  titleSize: number;
-  authorSize?: number;
-  padding?: string;
-  radius?: number;
+  size?: keyof typeof coverSizes;
   footer?: ReactNode;
-  style?: CSSProperties;
   className?: string;
+  src?: string | null;
+  sizes?: string;
 }) {
+  const sizing = coverSizes[size];
+
   return (
     <div
-      className={className}
-      style={{
-        width,
-        height,
-        borderRadius: radius,
-        boxShadow: "var(--shadow-book)",
-        background: gradient,
-        padding,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-        ...style,
-      }}
+      className={joinClasses(
+        "relative flex flex-none flex-col justify-between overflow-hidden rounded-[3px] ring-1 ring-white/20 shadow-[0_26px_46px_-22px_rgba(53,5,73,0.52),0_8px_18px_-8px_rgba(53,5,73,0.24)] transition duration-300 ease-out hover:-translate-y-1.5 hover:-rotate-1 hover:scale-[1.02] hover:shadow-[0_34px_54px_-22px_rgba(53,5,73,0.6)]",
+        gradient,
+        sizing.cover,
+        className,
+      )}
     >
-      <div
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: authorSize,
-          letterSpacing: "0.14em",
-          textTransform: "uppercase",
-          color: "rgba(244,227,215,0.8)",
-          fontWeight: 600,
-        }}
-      >
-        Nia Forrester
-      </div>
-      <div>
-        <div
-          style={{
-            fontFamily: "var(--font-serif)",
-            fontStyle: "italic",
-            fontWeight: 500,
-            fontSize: titleSize,
-            lineHeight: 1.05,
-            color: "var(--st-soft-cream)",
-          }}
-        >
-          {title}
-        </div>
-        {footer}
-      </div>
+      {src ? (
+        <Image
+          src={src}
+          alt={`Cover of ${title}`}
+          fill
+          sizes={sizes ?? (size === "featured" ? "152px" : "120px")}
+          className="object-cover"
+        />
+      ) : (
+        <>
+          <div
+            className={joinClasses(
+              "font-sans font-semibold uppercase tracking-[0.14em] text-[rgba(196,185,203,0.8)]",
+              sizing.author,
+            )}
+          >
+            Nia Forrester
+          </div>
+          <div>
+            <div
+              className={joinClasses(
+                "font-serif font-medium leading-[1.05] text-[var(--color-brand-surface)]",
+                sizing.title,
+              )}
+            >
+              {title}
+            </div>
+            {footer}
+          </div>
+        </>
+      )}
     </div>
   );
 }
 
-/**
- * Placeholder for the design's image slots (author portrait, community
- * photo, academy banner). Renders a soft branded frame until a real
- * photo is dropped into /public/images.
- */
 export function ImageSlot({
   label,
-  style,
+  className,
 }: {
   label: string;
-  style?: CSSProperties;
+  className?: string;
 }) {
   return (
     <div
-      style={{
-        // caller style first so the slot's layout/branding always wins
-        ...style,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 12,
-        background:
-          "linear-gradient(150deg, var(--bg-3) 0%, var(--st-soft-peach) 55%, var(--st-warm-tan) 130%)",
-      }}
+      className={joinClasses(
+        "flex flex-col items-center justify-center gap-3 bg-[linear-gradient(150deg,var(--color-brand-surface)_0%,var(--color-soft-lavender)_55%,var(--color-cool-teal)_130%)]",
+        className,
+      )}
     >
-      <span
-        style={{
-          width: 54,
-          height: 54,
-          borderRadius: 999,
-          background: "rgba(31,42,56,0.14)",
-          color: "var(--bg-inverse)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "var(--font-serif)",
-          fontStyle: "italic",
-          fontWeight: 500,
-          fontSize: 24,
-        }}
-      >
+      <span className="flex size-[54px] items-center justify-center rounded-full bg-[rgba(53,5,73,0.14)] font-serif text-2xl font-medium italic text-[var(--color-deep-plum)]">
         N
       </span>
-      <span
-        style={{
-          fontFamily: "var(--font-display)",
-          fontWeight: 600,
-          fontSize: 12,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-          color: "rgba(31,42,56,0.55)",
-          textAlign: "center",
-          padding: "0 24px",
-        }}
-      >
+      <span className="px-6 text-center font-sans text-xs font-semibold uppercase tracking-[0.08em] text-[rgba(53,5,73,0.55)]">
         {label}
       </span>
     </div>
   );
 }
 
-/** Circular initials avatar used across community/testimonial sections. */
 export function Avatar({
   initials,
   color,
-  size = 42,
-  fontSize = 13,
-  textColor = "var(--st-soft-cream)",
-  border,
-  style,
+  size = "md",
+  className,
 }: {
   initials: string;
   color: string;
-  size?: number;
-  fontSize?: number;
-  textColor?: string;
-  border?: string;
-  style?: CSSProperties;
+  size?: "sm" | "md";
+  className?: string;
 }) {
   return (
     <div
-      style={{
-        flex: "none",
-        width: size,
-        height: size,
-        borderRadius: 999,
-        background: color,
-        color: textColor,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "var(--font-display)",
-        fontWeight: 700,
-        fontSize,
-        border,
-        ...style,
-      }}
+      className={joinClasses(
+        "flex flex-none items-center justify-center rounded-full font-sans font-bold text-[var(--color-brand-surface)]",
+        size === "sm" ? "size-9 text-[11px]" : "size-[42px] text-[13px]",
+        color,
+        className,
+      )}
     >
       {initials}
     </div>

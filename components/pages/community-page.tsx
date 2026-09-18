@@ -1,905 +1,475 @@
+"use client";
+
+import { useState, type FormEvent, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { Avatar, ImageSlot } from "@/components/ui";
-import {
-  communityStats,
-  threads,
-  clubs,
-  circleSessions,
-  reactions,
-  principles,
-} from "@/lib/data";
+import { useConvexAuth, useMutation, useQuery } from "convex/react";
+import { ConvexError } from "convex/values";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+import { QueryBoundary } from "@/components/catalog/query-boundary";
+import { authIsConfigured } from "@/lib/auth-client";
+
+const button =
+  "inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--color-hot-magenta)] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50";
+const field =
+  "mt-2 block w-full rounded-xl border border-[var(--color-soft-lavender)] bg-white p-3 text-[var(--color-deep-plum)]";
+const card =
+  "rounded-[28px] border border-white/50 bg-[var(--color-brand-surface)] p-6 shadow-sm sm:p-8";
+
+function message(error: unknown) {
+  return error instanceof ConvexError &&
+    typeof error.data === "object" &&
+    error.data &&
+    "message" in error.data
+    ? String(error.data.message)
+    : "We couldn’t complete that request. Please try again.";
+}
+function Panel({ children }: { children: ReactNode }) {
+  return <div className={card}>{children}</div>;
+}
+
+function Discussion({ id, close }: { id: Id<"threads">; close: () => void }) {
+  const discussion = useQuery(api.readerCircle.discussion, { threadId: id });
+  const reply = useMutation(api.community.reply);
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await reply({ threadId: id, body });
+      setBody("");
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Panel>
+      <button type="button" onClick={close} className="mb-5 min-h-11 text-sm font-semibold">
+        ← All Discussions
+      </button>
+      {discussion === undefined ? (
+        <p role="status">Loading discussion…</p>
+      ) : discussion === null ? (
+        <p>This discussion is no longer available.</p>
+      ) : (
+        <>
+          <h2 className="text-2xl font-bold">{discussion.title}</h2>
+          <p className="text-sm opacity-70">{discussion.author}</p>
+          <p className="whitespace-pre-wrap break-words">{discussion.body}</p>
+          <h3 className="mt-8 font-bold">
+            Replies ({discussion.posts.length})
+          </h3>
+          {discussion.posts.length === 0 && (
+            <p>No replies yet. Start the conversation.</p>
+          )}
+          {discussion.posts.map((post) => (
+            <article
+              key={post._id}
+              className="mt-4 border-t border-[var(--color-soft-lavender)] pt-4"
+            >
+              <p className="font-semibold">{post.author}</p>
+              {post.spoilerChapter ? (
+                <details>
+                  <summary className="cursor-pointer">
+                    Spoiler: Chapter {post.spoilerChapter}
+                  </summary>
+                  <p className="whitespace-pre-wrap break-words">{post.body}</p>
+                </details>
+              ) : (
+                <p className="whitespace-pre-wrap break-words">{post.body}</p>
+              )}
+            </article>
+          ))}
+          {discussion.status === "open" && (
+            <form onSubmit={submit} className="mt-6">
+              <label className="font-semibold">
+                Your Reply
+                <textarea
+                  className={field}
+                  required
+                  maxLength={10000}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={busy || !body.trim()}
+                className={`${button} mt-4`}
+              >
+                {busy ? "Posting…" : "Post Reply"}
+              </button>
+            </form>
+          )}
+          {error && <p role="alert">{error}</p>}
+        </>
+      )}
+    </Panel>
+  );
+}
+
+function MemberRoom() {
+  const discussions = useQuery(api.readerCircle.discussions);
+  const clubs = useQuery(api.readerCircle.clubs);
+  const sessions = useQuery(api.readerCircle.sessions);
+  const create = useMutation(api.community.createThread);
+  const joinClub = useMutation(api.readerCircle.joinClub);
+  const [selected, setSelected] = useState<Id<"threads"> | null>(null);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      const id = await create({ title, body, tags: [] });
+      setTitle("");
+      setBody("");
+      setSelected(id);
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function join(id: Id<"clubs">) {
+    setBusy(true);
+    setError("");
+    try {
+      await joinClub({ clubId: id });
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="grid items-start gap-8 lg:grid-cols-[1.4fr_1fr]">
+      <div className="min-w-0 space-y-6">
+        {selected ? (
+          <Discussion id={selected} close={() => setSelected(null)} />
+        ) : (
+          <>
+            <Panel>
+              <h2 className="text-2xl font-bold">Active Discussions</h2>
+              {discussions === undefined ? (
+                <p role="status">Loading discussions…</p>
+              ) : discussions.length === 0 ? (
+                <p>
+                  No discussions yet. Share the first reading thought with the
+                  Circle.
+                </p>
+              ) : (
+                discussions.map((d) => (
+                  <button
+                    type="button"
+                    key={d._id}
+                    onClick={() => setSelected(d._id)}
+                    className="block w-full break-words border-t border-[var(--color-soft-lavender)] py-5 text-left"
+                  >
+                    <span className="block text-lg font-semibold">
+                      {d.title}
+                    </span>
+                    <span className="text-sm opacity-70">
+                      {d.author} · {d.replies} replies
+                    </span>
+                  </button>
+                ))
+              )}
+            </Panel>
+            <Panel>
+              <h2 className="text-xl font-bold">Start a Discussion</h2>
+              <form onSubmit={submit} className="space-y-4">
+                <label className="block">
+                  Title
+                  <input
+                    className={field}
+                    required
+                    maxLength={160}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                  />
+                </label>
+                <label className="block">
+                  Your Message
+                  <textarea
+                    className={field}
+                    required
+                    maxLength={10000}
+                    value={body}
+                    onChange={(e) => setBody(e.target.value)}
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className={button}
+                  disabled={busy || !title.trim() || !body.trim()}
+                >
+                  {busy ? "Posting…" : "Post Discussion"}
+                </button>
+              </form>
+            </Panel>
+          </>
+        )}
+        {error && (
+          <p role="alert" className={card}>
+            {error}
+          </p>
+        )}
+      </div>
+      <div className="min-w-0 space-y-6">
+        <Panel>
+          <h2 className="text-2xl font-bold">Book Clubs</h2>
+          {clubs === undefined ? (
+            <p role="status">Loading clubs…</p>
+          ) : clubs.length === 0 ? (
+            <p>
+              No book clubs have opened yet. New clubs will appear here when
+              they’re ready.
+            </p>
+          ) : (
+            clubs.map((club) => (
+              <article
+                key={club._id}
+                className="border-t border-[var(--color-soft-lavender)] py-4"
+              >
+                <h3 className="font-bold">{club.name}</h3>
+                <p>{club.description}</p>
+                <p className="text-sm">{club.members} members</p>
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy || club.joined || !club.eligible}
+                  onClick={() => void join(club._id)}
+                >
+                  {club.joined
+                    ? "Joined"
+                    : club.eligible
+                      ? "Join Club"
+                      : "Higher Membership Required"}
+                </button>
+              </article>
+            ))
+          )}
+        </Panel>
+        <Panel>
+          <h2 className="text-2xl font-bold">Upcoming Circle Sessions</h2>
+          {sessions === undefined ? (
+            <p role="status">Loading sessions…</p>
+          ) : sessions.length === 0 ? (
+            <p>No sessions are scheduled yet.</p>
+          ) : (
+            sessions.map((session) => (
+              <p key={session._id}>
+                <Link className="underline" href="/events">
+                  {session.title}
+                </Link>
+                <span className="block text-sm">
+                  {new Date(session.startsAt).toLocaleDateString()}
+                </span>
+              </p>
+            ))
+          )}
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function ConnectedCommunity() {
+  const { isLoading } = useConvexAuth();
+  const overview = useQuery(api.readerCircle.overview, isLoading ? "skip" : {});
+  const join = useMutation(api.readerCircle.join);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  async function enter() {
+    setBusy(true);
+    setError("");
+    try {
+      await join({});
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <div
+        className="grid grid-cols-3 gap-3 border-y border-[var(--color-deep-plum)]/15 py-7 text-center"
+        aria-label="Community statistics"
+      >
+        {[
+          { label: "Members", value: overview?.members },
+          { label: "Discussions", value: overview?.threads },
+          { label: "Book Clubs", value: overview?.clubs },
+        ].map((stat) => (
+          <div key={stat.label}>
+            <span className="block font-serif text-4xl">
+              {stat.value === undefined ? "—" : stat.value.toLocaleString()}
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-wider">
+              {stat.label}
+            </span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-8">
+        {!overview ? (
+          <Panel>
+            <p role="status">Loading the Reader Circle…</p>
+          </Panel>
+        ) : overview.access === "member" ? (
+          <MemberRoom />
+        ) : (
+          <Panel>
+            <h2 className="text-2xl font-bold">
+              {overview.access === "eligible"
+                ? "Your Place in the Circle Is Ready"
+                : "A Space for Paid Members"}
+            </h2>
+            <p>
+              {overview.members === 0
+                ? "The Circle is just beginning. There are no members yet. "
+                : ""}
+              {overview.access === "eligible"
+                ? "Join to take part in private discussions and book clubs."
+                : "An active paid membership is required to join, read discussions, and participate in book clubs. A free account does not include community access."}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {overview.access === "eligible" ? (
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy}
+                  onClick={() => void enter()}
+                >
+                  {busy ? "Joining…" : "Join the Circle"}
+                </button>
+              ) : (
+                <>
+                  <Link className={button} href="/membership">
+                    Explore Paid Memberships
+                  </Link>
+                  {overview.access === "anonymous" && (
+                    <Link
+                      className="inline-flex min-h-11 items-center px-4 font-semibold underline"
+                      href="/signin"
+                    >
+                      Already a Member? Sign In
+                    </Link>
+                  )}
+                </>
+              )}
+            </div>
+            {error && <p role="alert">{error}</p>}
+          </Panel>
+        )}
+      </div>
+    </>
+  );
+}
 
 export default function CommunityPage() {
   return (
-    <main>
-      <section style={{ background: "var(--bg-inverse)" }}>
-        <div
-          style={{
-            maxWidth: 1240,
-            margin: "0 auto",
-            padding: "64px 40px",
-            display: "grid",
-            gridTemplateColumns: "1.05fr 0.95fr",
-            gap: 56,
-            alignItems: "center",
-          }}
-        >
+    <main className="text-[var(--color-deep-plum)]">
+      <section className="bg-[var(--color-deep-plum)] text-[var(--color-soft-lavender)]">
+        <div className="mx-auto grid max-w-[1240px] items-center gap-12 px-5 py-12 sm:px-10 lg:grid-cols-[1.05fr_0.95fr] lg:py-16">
           <div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 11,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--accent)",
-                marginBottom: 16,
-              }}
-            >
-              Members only · Connect
-            </div>
-            <h1
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 56,
-                letterSpacing: "-0.03em",
-                color: "var(--st-soft-cream)",
-                margin: "0 0 14px",
-                maxWidth: "16ch",
-              }}
-            >
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--color-hot-magenta)]">
+              Paid Members · Connect
+            </p>
+            <h1 className="my-5 text-4xl font-bold tracking-tight sm:text-5xl">
               The Reader Circle
             </h1>
-            <p
-              style={{
-                fontSize: 18,
-                lineHeight: 1.6,
-                color: "rgba(228,216,215,0.8)",
-                maxWidth: 560,
-                margin: "0 0 28px",
-              }}
-            >
-              A private home for Black women&apos;s fiction. Discussions, book
-              clubs, character debates — the conversations that used to scatter
-              across the comments, finally in one room.
+            <p className="max-w-xl text-lg leading-relaxed">
+              A private home for Black women&apos;s fiction. Book clubs,
+              character debates, and conversations that stay with you long after
+              the last page.
             </p>
-            <Link
-              href="/membership"
-              className="nf-btn-primary"
-              style={{
-                display: "inline-block",
-                background: "var(--accent)",
-                color: "var(--fg-on-accent)",
-                padding: "15px 26px",
-                borderRadius: 999,
-                fontFamily: "var(--font-display)",
-                fontWeight: 600,
-                fontSize: 15,
-              }}
-            >
-              Become a member ↗
-            </Link>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                marginTop: 32,
-              }}
-            >
-              <div style={{ display: "flex" }}>
-                <Avatar
-                  initials="TR"
-                  color="var(--st-cocoa-brown)"
-                  size={36}
-                  fontSize={11}
-                  border="2px solid var(--bg-inverse)"
-                />
-                <Avatar
-                  initials="IK"
-                  color="var(--st-muted-mauve)"
-                  size={36}
-                  fontSize={11}
-                  border="2px solid var(--bg-inverse)"
-                  style={{ marginLeft: -9 }}
-                />
-                <Avatar
-                  initials="DW"
-                  color="var(--st-teal-green)"
-                  size={36}
-                  fontSize={11}
-                  border="2px solid var(--bg-inverse)"
-                  style={{ marginLeft: -9 }}
-                />
-                <Avatar
-                  initials="RB"
-                  color="var(--st-warm-tan)"
-                  size={36}
-                  fontSize={11}
-                  border="2px solid var(--bg-inverse)"
-                  style={{ marginLeft: -9 }}
-                />
-              </div>
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: "rgba(228,216,215,0.72)",
-                }}
-              >
-                1,240 readers already in the room
-              </span>
-            </div>
+            <a href="#circle" className={`${button} mt-5`}>
+              Find Your Place ↗
+            </a>
           </div>
-          <div style={{ position: "relative", padding: "16px 16px 0 0" }}>
+          <div className="relative pt-4 pr-4">
             <span
-              style={{
-                position: "absolute",
-                top: 0,
-                right: 0,
-                left: 16,
-                bottom: 16,
-                borderRadius: 28,
-                border: "1px solid rgba(228,216,215,0.22)",
-              }}
-            ></span>
-            <ImageSlot
-              label="Drop a reader-community photo"
-              style={{
-                position: "relative",
-                zIndex: 1,
-                display: "block",
-                width: "100%",
-                height: 380,
-                borderRadius: 28,
-                boxShadow: "var(--shadow-lg)",
-                background: "rgba(247,198,188,0.10)",
-              }}
+              aria-hidden="true"
+              className="absolute inset-0 bottom-4 left-4 rounded-[28px] border border-[var(--color-soft-lavender)]/25"
             />
-            <div
-              style={{
-                position: "absolute",
-                left: -24,
-                bottom: 36,
-                zIndex: 3,
-                background: "var(--surface-card)",
-                borderRadius: 16,
-                padding: "14px 16px",
-                boxShadow: "var(--shadow-lg)",
-                maxWidth: 270,
-                display: "flex",
-                gap: 11,
-                alignItems: "flex-start",
-              }}
-            >
-              <Avatar
-                initials="TR"
-                color="var(--st-cocoa-brown)"
-                size={32}
-                fontSize={11}
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[28px]">
+              <Image
+                src="/images/reader-circle.png"
+                alt="An imagined book-club gathering of four women sharing a novel and conversation"
+                fill
+                priority
+                sizes="(max-width: 1023px) 100vw, 540px"
+                className="object-cover"
               />
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 600,
-                    fontSize: 12,
-                    color: "var(--fg-strong)",
-                  }}
-                >
-                  Tasha R.{" "}
-                  <span style={{ color: "var(--fg-4)", fontWeight: 500 }}>
-                    · in Ch. 11
-                  </span>
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-serif)",
-                    fontStyle: "italic",
-                    fontSize: 13.5,
-                    lineHeight: 1.45,
-                    color: "var(--fg-2)",
-                    marginTop: 3,
-                  }}
-                >
-                  &ldquo;The drawer line. I gasped.&rdquo;
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </section>
-
       <section
-        style={{ maxWidth: 1240, margin: "0 auto", padding: "36px 40px 0" }}
+        id="circle"
+        className="mx-auto max-w-[1240px] scroll-mt-8 px-5 py-10 sm:px-10"
       >
-        <div
-          style={{
-            borderTop: "1px solid var(--border-rule)",
-            borderBottom: "1px solid var(--border-1)",
-            padding: "26px 6px",
-            display: "grid",
-            gridTemplateColumns: "repeat(4,1fr)",
-          }}
-        >
-          {communityStats.map((st) => (
-            <div
-              key={st.label}
-              style={{
-                display: "flex",
-                alignItems: "baseline",
-                gap: 12,
-                borderLeft: "1px solid var(--border-1)",
-                paddingLeft: 24,
-              }}
-            >
-              <span
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  fontWeight: 500,
-                  fontSize: 36,
-                  color: "var(--fg-strong)",
-                  lineHeight: 1,
-                }}
-              >
-                {st.num}
-              </span>
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: 11,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--fg-3)",
-                  fontWeight: 600,
-                }}
-              >
-                {st.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section
-        style={{
-          maxWidth: 1240,
-          margin: "0 auto",
-          padding: "56px 40px",
-          display: "grid",
-          gridTemplateColumns: "1.5fr 1fr",
-          gap: 48,
-          alignItems: "start",
-        }}
-      >
-        <div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              margin: "0 0 18px",
-            }}
-          >
-            <h2
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 30,
-                letterSpacing: "-0.02em",
-                color: "var(--fg-strong)",
-                margin: 0,
-              }}
-            >
-              Active discussions
+        {!authIsConfigured ? (
+          <Panel>
+            <h2 className="text-xl font-bold">
+              The Circle Is Temporarily Unavailable
             </h2>
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 7,
-                fontFamily: "var(--font-display)",
-                fontWeight: 600,
-                fontSize: 12,
-                color: "var(--fg-3)",
-              }}
-            >
-              <span
-                style={{
-                  width: 7,
-                  height: 7,
-                  borderRadius: 999,
-                  background: "var(--feature)",
-                  animation: "nfPulse 2.4s ease-in-out infinite",
-                }}
-              ></span>
-              212 online now
-            </span>
-          </div>
-          <div
-            style={{
-              background: "var(--surface-card)",
-              borderRadius: 22,
-              boxShadow: "var(--shadow-xs)",
-              overflow: "hidden",
-            }}
-          >
-            {threads.map((t) => (
-              <article
-                key={t.title}
-                className="nf-thread"
-                style={{
-                  cursor: "pointer",
-                  padding: "20px 24px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 18,
-                  borderTop: "1px solid var(--border-1)",
-                }}
-              >
-                <Avatar
-                  initials={t.initials}
-                  color={t.avatarColor}
-                  size={42}
-                  fontSize={13}
-                />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h3
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontWeight: 600,
-                      fontSize: 17,
-                      lineHeight: 1.3,
-                      color: "var(--fg-strong)",
-                      margin: "0 0 5px",
-                    }}
-                  >
-                    {t.title}
-                  </h3>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      fontSize: 13,
-                      color: "var(--fg-3)",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontSize: 11,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        color: "var(--accent)",
-                        fontWeight: 700,
-                      }}
-                    >
-                      {t.tag}
-                    </span>
-                    <span
-                      style={{
-                        width: 3,
-                        height: 3,
-                        borderRadius: 999,
-                        background: "var(--fg-4)",
-                      }}
-                    ></span>
-                    <span>{t.author}</span>
-                    <span
-                      style={{
-                        width: 3,
-                        height: 3,
-                        borderRadius: 999,
-                        background: "var(--fg-4)",
-                      }}
-                    ></span>
-                    <span>{t.when}</span>
-                    {t.pinned && (
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                          fontFamily: "var(--font-display)",
-                          fontSize: 10,
-                          letterSpacing: "0.08em",
-                          textTransform: "uppercase",
-                          color: "var(--feature)",
-                          fontWeight: 700,
-                        }}
-                      >
-                        <svg
-                          width="11"
-                          height="11"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M12 17v5"></path>
-                          <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"></path>
-                        </svg>
-                        Pinned
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    flex: "none",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 6,
-                    color: "var(--fg-3)",
-                  }}
-                >
-                  <svg
-                    width="15"
-                    height="15"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.75"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
-                  </svg>
-                  <span
-                    style={{
-                      fontFamily: "var(--font-display)",
-                      fontWeight: 600,
-                      fontSize: 14,
-                    }}
-                  >
-                    {t.count}
-                  </span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h2
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 30,
-              letterSpacing: "-0.02em",
-              color: "var(--fg-strong)",
-              margin: "0 0 18px",
-              paddingTop: 5,
-            }}
-          >
-            Book clubs
-          </h2>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: 14 }}
-          >
-            {clubs.map((c) => (
-              <article
-                key={c.name}
-                className="nf-card-hover"
-                style={{
-                  cursor: "pointer",
-                  borderRadius: 20,
-                  boxShadow: "var(--shadow-xs)",
-                  background: "var(--surface-card)",
-                  padding: "20px 22px",
-                  display: "flex",
-                  gap: 16,
-                  alignItems: "flex-start",
-                }}
-              >
-                <span
-                  style={{
-                    flex: "none",
-                    width: 12,
-                    height: 12,
-                    borderRadius: 999,
-                    background: c.gradient,
-                    marginTop: 5,
-                  }}
-                ></span>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "baseline",
-                      justifyContent: "space-between",
-                      gap: 12,
-                    }}
-                  >
-                    <h3
-                      style={{
-                        fontFamily: "var(--font-display)",
-                        fontWeight: 700,
-                        fontSize: 17,
-                        letterSpacing: "-0.01em",
-                        color: "var(--fg-strong)",
-                        margin: "0 0 5px",
-                      }}
-                    >
-                      {c.name}
-                    </h3>
-                    <span
-                      style={{
-                        whiteSpace: "nowrap",
-                        fontFamily: "var(--font-display)",
-                        fontSize: 11,
-                        letterSpacing: "0.06em",
-                        textTransform: "uppercase",
-                        color: "var(--fg-3)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {c.members}
-                    </span>
-                  </div>
-                  <p
-                    style={{
-                      fontSize: 13.5,
-                      lineHeight: 1.5,
-                      color: "var(--fg-2)",
-                      margin: 0,
-                    }}
-                  >
-                    {c.desc}
-                  </p>
-                </div>
-              </article>
-            ))}
-            <Link
-              href="/membership"
-              className="nf-btn-ghost"
-              style={{
-                display: "inline-block",
-                textAlign: "center",
-                background: "transparent",
-                color: "var(--fg-strong)",
-                border: "1px solid var(--border-2)",
-                padding: "13px 22px",
-                borderRadius: 999,
-                fontFamily: "var(--font-display)",
-                fontWeight: 600,
-                fontSize: 14,
-              }}
-            >
-              Start a club with membership
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section
-        style={{ maxWidth: 1240, margin: "0 auto", padding: "24px 40px 8px" }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "space-between",
-            marginBottom: 24,
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 11,
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "var(--accent)",
-              }}
-            >
-              Live together
-            </div>
-            <h2
-              style={{
-                fontFamily: "var(--font-display)",
-                fontWeight: 700,
-                fontSize: 30,
-                letterSpacing: "-0.02em",
-                color: "var(--fg-strong)",
-                margin: "8px 0 0",
-              }}
-            >
-              This week in the Circle
-            </h2>
-          </div>
-          <Link
-            href="/events"
-            className="nf-link"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 600,
-              fontSize: 14,
-              color: "var(--fg-2)",
-            }}
-          >
-            All events
-          </Link>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 18,
-          }}
-        >
-          {circleSessions.map((s) => (
-            <Link
-              key={s.title}
-              href="/events"
-              className="nf-card-hover"
-              style={{
-                cursor: "pointer",
-                background: "var(--surface-card)",
-                borderRadius: 22,
-                padding: 24,
-                boxShadow: "var(--shadow-sm)",
-                display: "flex",
-                gap: 18,
-                alignItems: "flex-start",
-              }}
-            >
-              <div
-                style={{
-                  flex: "none",
-                  width: 58,
-                  textAlign: "center",
-                  background: "var(--bg-3)",
-                  borderRadius: 14,
-                  padding: "10px 0",
-                }}
-              >
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 11,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: s.accent,
-                  }}
-                >
-                  {s.mon}
-                </div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 24,
-                    color: "var(--fg-strong)",
-                    lineHeight: 1,
-                    marginTop: 2,
-                  }}
-                >
-                  {s.day}
-                </div>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 11,
-                    letterSpacing: "0.1em",
-                    textTransform: "uppercase",
-                    color: s.accent,
-                    marginBottom: 6,
-                  }}
-                >
-                  {s.type}
-                </div>
-                <h3
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 600,
-                    fontSize: 17,
-                    lineHeight: 1.25,
-                    color: "var(--fg-strong)",
-                    margin: "0 0 8px",
-                  }}
-                >
-                  {s.title}
-                </h3>
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontSize: 12,
-                    letterSpacing: "0.04em",
-                    color: "var(--fg-3)",
-                  }}
-                >
-                  {s.where} · {s.host}
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section
-        style={{ maxWidth: 1240, margin: "0 auto", padding: "56px 40px 24px" }}
-      >
-        <div
-          style={{
-            textAlign: "center",
-            maxWidth: 600,
-            margin: "0 auto 36px",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--accent)",
-              marginBottom: 14,
-            }}
-          >
-            From the margins
-          </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: "clamp(30px,3.4vw,40px)",
-              letterSpacing: "-0.025em",
-              color: "var(--fg-strong)",
-              margin: 0,
-              lineHeight: 1.06,
-            }}
-          >
-            What the Circle is saying right now
-          </h2>
-        </div>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 20,
-          }}
-        >
-          {reactions.map((r) => (
-            <article
-              key={r.name}
-              style={{
-                borderTop: "2px solid var(--border-rule)",
-                padding: "26px 6px 0",
-                display: "flex",
-                flexDirection: "column",
-                gap: 20,
-              }}
-            >
-              <p
-                style={{
-                  fontFamily: "var(--font-serif)",
-                  fontStyle: "italic",
-                  fontWeight: 500,
-                  fontSize: 19,
-                  lineHeight: 1.55,
-                  color: "var(--fg-1)",
-                  margin: 0,
-                  flex: 1,
-                }}
-              >
-                &ldquo;{r.quote}&rdquo;
-              </p>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: 12 }}
-              >
-                <Avatar
-                  initials={r.initials}
-                  color={r.color}
-                  size={42}
-                  fontSize={14}
-                />
-                <div
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 600,
-                    fontSize: 15,
-                    color: "var(--fg-strong)",
-                  }}
-                >
-                  {r.name}
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section
-        style={{ maxWidth: 1240, margin: "0 auto", padding: "40px 40px 64px" }}
-      >
-        <div
-          style={{
-            background: "var(--bg-3)",
-            borderRadius: 36,
-            padding: "clamp(36px,4vw,52px)",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: 11,
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              color: "var(--depth)",
-              marginBottom: 8,
-            }}
-          >
-            House rules
-          </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-display)",
-              fontWeight: 700,
-              fontSize: "clamp(28px,3.2vw,36px)",
-              letterSpacing: "-0.025em",
-              color: "var(--bg-inverse)",
-              margin: "0 0 32px",
-            }}
-          >
-            How we read together
-          </h2>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
-              gap: 32,
-            }}
-          >
-            {principles.map((p) => (
-              <div key={p.num}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-serif)",
-                    fontStyle: "italic",
-                    fontWeight: 500,
-                    fontSize: 34,
-                    color: "var(--accent)",
-                    lineHeight: 1,
-                    marginBottom: 14,
-                  }}
-                >
-                  {p.num}
-                </div>
-                <h3
-                  style={{
-                    fontFamily: "var(--font-display)",
-                    fontWeight: 700,
-                    fontSize: 19,
-                    letterSpacing: "-0.01em",
-                    color: "var(--bg-inverse)",
-                    margin: "0 0 8px",
-                  }}
-                >
-                  {p.title}
-                </h3>
-                <p
-                  style={{
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    color: "rgba(31,42,56,0.72)",
-                    margin: 0,
-                  }}
-                >
-                  {p.desc}
+            <p>
+              Membership information couldn’t be loaded. Please check back
+              shortly.
+            </p>
+          </Panel>
+        ) : (
+          <QueryBoundary
+            fallback={(_error, retry) => (
+              <Panel>
+                <h2 className="text-xl font-bold">
+                  We Couldn’t Load the Circle
+                </h2>
+                <p>
+                  Check your connection and membership status, then try again.
                 </p>
+                <button type="button" className={button} onClick={retry}>
+                  Try Again
+                </button>
+              </Panel>
+            )}
+          >
+            <ConnectedCommunity />
+          </QueryBoundary>
+        )}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold">How We Read Together</h2>
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            {[
+              {
+                title: "Keep Spoilers Behind the Cut",
+                body: "Name the chapter before sharing a spoiler. Everyone reads at her own pace.",
+              },
+              {
+                title: "Discuss the Book with Care",
+                body: "Strong opinions are welcome. Treat every reader with respect.",
+              },
+              {
+                title: "Make Room for Each Other",
+                body: "Listen closely, share thoughtfully, and welcome new voices.",
+              },
+            ].map((rule) => (
+              <div key={rule.title}>
+                <h3 className="font-bold">{rule.title}</h3>
+                <p>{rule.body}</p>
               </div>
             ))}
           </div>
