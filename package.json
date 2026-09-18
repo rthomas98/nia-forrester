@@ -9,7 +9,11 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test:e2e": "playwright test",
-    "import:legacy": "node scripts/import-legacy-content.mjs"
+    "import:legacy": "node scripts/import-legacy-content.mjs",
+    "space:status": "node scripts/space-maintenance.mjs status",
+    "space:clean": "node scripts/space-maintenance.mjs clean",
+    "space:clean:deep": "node scripts/space-maintenance.mjs deep-clean",
+    "space:auto": "node scripts/space-maintenance.mjs auto"
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.12.5",
