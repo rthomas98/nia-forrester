@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { flushSync } from "react-dom";
 import { authClient, authIsConfigured } from "@/lib/auth-client";
 import { revokeAfterUnsubscribe } from "@/lib/sign-out";
@@ -29,6 +29,12 @@ const unconfiguredAuth: AuthState = {
     user: null,
     signOut: async () => { },
 };
+// React uses the server snapshot for SSR and the first hydration render, even
+// when Better Auth already has a cached session in the browser. Later client
+// renders use the client snapshot without resetting on route navigation.
+const subscribeToHydration = () => () => {};
+const clientHydrationSnapshot = () => true;
+const serverHydrationSnapshot = () => false;
 export function AuthProvider({ children }: {
     children: ReactNode;
 }) {
@@ -43,20 +49,23 @@ function ConfiguredAuthProvider({ children }: {
     children: ReactNode;
 }) {
     const session = authClient.useSession();
-    const user = session.data?.user ?? null;
+    const hydrated = useSyncExternalStore(
+        subscribeToHydration, clientHydrationSnapshot, serverHydrationSnapshot,
+    );
+    const user = hydrated ? session.data?.user ?? null : null;
     // While signing out, the page tree (and every authenticated Convex subscriber in it)
     // is unmounted before the session is revoked; see lib/sign-out.ts.
     const [signingOut, setSigningOut] = useState(false);
     const value = useMemo<AuthState>(() => ({
         authed: Boolean(user),
-        ready: !session.isPending,
+        ready: hydrated && !session.isPending,
         configured: authIsConfigured,
         user,
         signOut: () => revokeAfterUnsubscribe(
             () => flushSync(() => setSigningOut(true)),
             () => authClient.signOut(),
         ),
-    }), [session.isPending, user]);
+    }), [hydrated, session.isPending, user]);
     return (<AuthContext.Provider value={value}>
       {signingOut ? <SigningOut /> : children}
     </AuthContext.Provider>);
