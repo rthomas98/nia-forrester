@@ -14,7 +14,7 @@ export default function Page() {
     return (
       <PrelaunchPage
         eyebrow="The Circle is opening soon"
-        title="No checkout before the experience is ready."
+        title="No Checkout Before the Experience Is Ready"
         body="Membership accounts and billing are built, but paid plans remain paused until the reading library, community calendar, and member email flows finish their launch review."
       />
     );

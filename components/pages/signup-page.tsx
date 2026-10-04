@@ -6,6 +6,26 @@ import { prefOptions } from "@/lib/data";
 import { useAuth } from "@/components/auth-context";
 import { authClient } from "@/lib/auth-client";
 import { completeReaderProfile } from "@/app/signup/actions";
+import Image from "next/image";
+import { Check } from "relume-icons";
+import { Login7 } from "@/components/relume/login7";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { alertText, muted, textLink } from "@/lib/typography";
+
+const stepTitles = {
+    1: "Create Your Account",
+    2: "What Do You Love to Read?",
+    3: "You’re In.",
+} as const;
+const stepDescriptions = {
+    1: "Create an account to build your reading library.",
+    2: "Pick a few — your shelf and recommendations start here.",
+    3: "Your account is ready.",
+} as const;
+
 export default function SignUpPage() {
     const params = useSearchParams();
     const signupTier = params.get("tier") ?? "Reader Circle";
@@ -125,151 +145,104 @@ export default function SignUpPage() {
             setPending(false);
         }
     };
-    return (<main className="max-[900px]:px-8 max-[900px]:py-12 max-[640px]:px-5 max-[640px]:py-9 [max-width:640px] [margin:0_auto] [padding:52px_40px_88px]">
-      <div className="flex items-center justify-between [margin-bottom:36px]">
-        <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)]">
-          Join the Circle
-        </div>
-        <div className="flex items-center [gap:6px]">
-          {[1, 2, 3].map((dot) => (
-            <span
-              key={dot}
-              className={`h-1 w-[22px] rounded-full ${step >= dot ? "bg-[var(--color-hot-magenta)]" : "bg-[rgba(53,5,73,0.16)]"}`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {step === 1 && (<>
-          <h1 className="font-sans [font-weight:700] [font-size:40px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_8px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-            Create your account
-          </h1>
-          <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_28px] text-pretty">
-            Create an account to build your reading library.
-          </p>
-
-          <div className="flex items-center justify-between [gap:16px] [background:var(--color-cool-teal)] [border-radius:18px] [padding:16px_20px] [margin-bottom:24px]">
-            <div>
-              <div className="font-sans [font-size:10px] [letter-spacing:0.14em] uppercase [color:rgba(53,5,73,0.6)] [font-weight:700] [margin-bottom:3px]">
-                Your plan
-              </div>
-              <div className="font-sans [font-weight:700] [font-size:16px] [color:var(--color-deep-plum)]">
-                {signupTier}
-              </div>
+    const currentStep = step as 1 | 2 | 3;
+    return (<main>
+      <Login7
+        tagline={`Join the Circle · Step ${step} of 3`}
+        title={stepTitles[currentStep]}
+        description={<>
+            <p>{stepDescriptions[currentStep]}</p>
+            <div className="mt-5 flex items-center justify-center gap-1.5" aria-hidden="true">
+              {[1, 2, 3].map((dot) => (<span key={dot} className={`h-0.5 w-8 rounded-full ${step >= dot ? "bg-champagne" : "bg-scheme-border"}`}/>))}
             </div>
-            <Link href="/membership" className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-              Change plan
-            </Link>
-          </div>
+          </>}
+        image={<Image src="/images/reader-circle.png" alt="An imagined book-club gathering of four women sharing a novel and conversation" fill sizes="50vw" className="object-cover"/>}
+        footer={step === 1 ? <>
+            <p>Already a member?</p>
+            <Link href="/signin" className={textLink}>Sign In</Link>
+          </> : undefined}
+      >
+        {step === 1 && (<>
+            <div className="mb-6 flex items-center justify-between gap-4 rounded-card border border-scheme-border bg-wine-card px-5 py-4">
+              <div>
+                <p className="font-ui text-tiny font-semibold tracking-[0.16em] text-taupe uppercase">Your Plan</p>
+                <p className="font-display text-h6 font-semibold text-cream">{signupTier}</p>
+              </div>
+              <Link href="/membership" className={textLink}>
+                Change Plan
+              </Link>
+            </div>
+            <form onSubmit={signupContinue} className="grid grid-cols-1 gap-6">
+              <div className="grid grid-cols-1">
+                <Label htmlFor="signup-name" className="mb-2">First Name</Label>
+                <Input id="signup-name" type="text" name="name" autoComplete="given-name" required value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="What should we call you?"/>
+              </div>
+              <div className="grid grid-cols-1">
+                <Label htmlFor="signup-email" className="mb-2">Email</Label>
+                <Input id="signup-email" type="email" name="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com"/>
+              </div>
+              <div className="grid grid-cols-1">
+                <Label htmlFor="signup-password" className="mb-2">Password</Label>
+                <Input id="signup-password" type="password" name="new-password" autoComplete="new-password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters"/>
+              </div>
+              {error && (<p role="alert" className={alertText}>{error}</p>)}
+              <Button type="submit">Continue</Button>
+            </form>
+          </>)}
 
-          <form onSubmit={signupContinue} className="flex flex-col [gap:14px]">
-            <label className="flex flex-col [gap:7px]">
-              <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                First name
-              </span>
-              <input type="text" name="name" autoComplete="given-name" required value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder="What should we call you?" className="[border:1px_solid_rgba(53,5,73,0.16)] [background:var(--color-brand-surface)] [border-radius:14px] [padding:13px_16px] font-sans [font-size:15px] [color:var(--color-deep-plum)]"/>
-            </label>
-            <label className="flex flex-col [gap:7px]">
-              <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                Email
-              </span>
-              <input type="email" name="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="[border:1px_solid_rgba(53,5,73,0.16)] [background:var(--color-brand-surface)] [border-radius:14px] [padding:13px_16px] font-sans [font-size:15px] [color:var(--color-deep-plum)]"/>
-            </label>
-            <label className="flex flex-col [gap:7px]">
-              <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                Password
-              </span>
-              <input type="password" name="new-password" autoComplete="new-password" required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" className="[border:1px_solid_rgba(53,5,73,0.16)] [background:var(--color-brand-surface)] [border-radius:14px] [padding:13px_16px] font-sans [font-size:15px] [color:var(--color-deep-plum)]"/>
-            </label>
-            {error && (<p role="alert" className="[margin:2px_0_0] [color:var(--color-hot-magenta)] [font-size:13px] [line-height:1.5] text-pretty">
-                {error}
-              </p>)}
-            <button type="submit" className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [margin-top:8px] [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-              Continue
-            </button>
-          </form>
-          <p className="[font-size:14px] [color:var(--color-plum-copy)] [margin:22px_0_0] text-center text-pretty">
-            Already a member?{" "}
-            <Link href="/signin" className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:14px] [color:var(--color-hot-magenta)] [padding:0px]">
-              Sign in
-            </Link>
-          </p>
-        </>)}
-
-      {step === 2 && (<>
-          <h1 className="font-sans [font-weight:700] [font-size:40px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_8px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-            What do you love to read?
-          </h1>
-          <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_28px] text-pretty">
-            Pick a few — your shelf and recommendations start here.
-          </p>
-
-          <div className="flex flex-wrap [gap:10px] [margin-bottom:32px]">
-            {prefOptions.map((label) => {
+        {step === 2 && (<>
+            <div role="group" aria-label="Reading preferences" className="mb-8 flex flex-wrap justify-center gap-2.5">
+              {prefOptions.map((label) => {
                 const on = selectedPreferences.has(label);
-                return (<button key={label} type="button" onClick={() => togglePref(label)} className={`rounded-full border px-5 py-[11px] font-sans text-sm font-semibold transition-colors duration-150 ${on ? "border-[var(--color-deep-plum)] bg-[var(--color-deep-plum)] text-[var(--color-brand-surface)]" : "border-[rgba(53,5,73,0.16)] bg-[var(--color-brand-surface)] text-[var(--color-deep-plum)]"}`}>
-                  {label}
-                </button>);
-            })}
-          </div>
-
-          <div className="flex items-center justify-between [gap:16px] [background:var(--color-brand-surface)] [border-radius:18px] [padding:16px_20px] [margin-bottom:32px]">
-            <div>
-              <div className="font-sans [font-weight:600] [font-size:14px] [color:var(--color-deep-plum)]">
-                Chapter alerts
-              </div>
-              <div className="[font-size:13px] [color:var(--color-plum-muted)] [margin-top:2px]">
-                Save your preference for chapter updates.
-              </div>
+                return (<button key={label} type="button" aria-pressed={on} onClick={() => togglePref(label)} className={cn(buttonVariants({ variant: on ? "alternate" : "secondary", size: "sm" }), "normal-case tracking-[0.04em]")}>
+                    {label}
+                  </button>);
+              })}
             </div>
-            <button type="button" onClick={() => setAlerts((a) => !a)} aria-pressed={alerts} aria-label="Toggle Chapter alerts" className={`relative h-[26px] w-[46px] flex-none rounded-full transition-colors duration-150 ${alerts ? "bg-[var(--color-hot-magenta)]" : "bg-[rgba(53,5,73,0.16)]"}`}>
-              <span className={`absolute top-[3px] size-5 rounded-full bg-white shadow-sm transition-[left] duration-150 ${alerts ? "left-[23px]" : "left-[3px]"}`}></span>
-            </button>
-          </div>
 
-          <div className="flex [gap:12px] items-center">
-            {error && (<p role="alert" className="[flex-basis:100%] [margin:0_0_6px] [color:var(--color-hot-magenta)] [font-size:13px] text-pretty">
-                {error}
-              </p>)}
-            <button type="button" onClick={signupFinish} disabled={pending} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_28px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-              {pending ? "Creating your account…" : "Create my account"}
-            </button>
-            <button type="button" onClick={() => setStep(1)} className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:14px] [color:var(--color-plum-copy)]">
-              Back
-            </button>
-          </div>
-        </>)}
+            <div className="mb-8 flex items-center justify-between gap-4 rounded-card border border-scheme-border bg-wine-card px-5 py-4">
+              <div>
+                <p className="font-ui text-small font-semibold text-cream">Chapter Alerts</p>
+                <p className={muted}>Save your preference for chapter updates.</p>
+              </div>
+              <button type="button" onClick={() => setAlerts((a) => !a)} aria-pressed={alerts} aria-label="Toggle Chapter alerts" className={`relative h-[26px] w-[46px] flex-none cursor-pointer rounded-full transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne ${alerts ? "bg-champagne" : "bg-wine-raised"}`}>
+                <span className={`absolute top-[3px] size-5 rounded-full bg-cream shadow-sm transition-[left] duration-150 motion-reduce:transition-none ${alerts ? "left-[23px]" : "left-[3px]"}`}></span>
+              </button>
+            </div>
 
-      {step === 3 && (<div className="text-center [padding:24px_0_0]">
-          <div className="[width:72px] [height:72px] [border-radius:999px] [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] flex items-center justify-center [margin:0_auto_26px]">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5"></path>
-            </svg>
-          </div>
-          <h1 className="font-sans [font-weight:700] [font-size:40px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_10px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-            You&apos;re in.
-          </h1>
-          <p className="[font-size:16px] [line-height:1.6] [color:var(--color-plum-copy)] [max-width:40ch] [margin:0_auto_30px] text-pretty">
-            Your{" "}
-            <strong className="font-sans [font-weight:600] [color:var(--color-deep-plum)]">
-              {signupTier}
-            </strong>{" "}
-            account is ready. If you selected a paid Circle, checkout is the
-            next step. Explore the library when you’re ready.
-          </p>
-          <div className="flex [gap:12px] justify-center flex-wrap">
-            {paidTier ? (<button type="button" onClick={startCheckout} disabled={pending} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_28px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-                {pending ? "Opening checkout…" : "Continue to secure checkout ↗"}
-              </button>) : (<Link href="/serial" className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 inline-block [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_28px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-                Start reading ↗
-              </Link>)}
-            <Link href="/dashboard" className="transition duration-150 hover:border-[var(--color-plum-copy)] hover:bg-black/5 inline-block [background:transparent] [color:var(--color-deep-plum)] [border:1px_solid_rgba(53,5,73,0.16)] [padding:14px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-              Go to my shelf
-            </Link>
-          </div>
-          {error && (<p role="alert" className="[margin:18px_auto_0] [color:var(--color-hot-magenta)] [font-size:13px] [max-width:44ch] text-pretty">
-              {error}
-            </p>)}
-        </div>)}
+            {error && (<p role="alert" className={`mb-4 ${alertText}`}>{error}</p>)}
+            <div className="grid grid-cols-1 gap-4">
+              <Button type="button" onClick={signupFinish} disabled={pending}>
+                {pending ? "Creating your account…" : "Create My Account"}
+              </Button>
+              <Button type="button" variant="link" size="link" onClick={() => setStep(1)}>
+                Back
+              </Button>
+            </div>
+          </>)}
+
+        {step === 3 && (<div className="text-center">
+            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-champagne text-wine-sunken">
+              <Check aria-hidden="true" className="size-7"/>
+            </div>
+            <p className="mx-auto mb-8 max-w-[40ch] text-pretty text-body">
+              Your{" "}
+              <strong className="font-semibold text-cream">{signupTier}</strong>{" "}
+              account is ready. If you selected a paid Circle, checkout is the
+              next step. Explore the library when you’re ready.
+            </p>
+            <div className="grid grid-cols-1 gap-4">
+              {paidTier ? (<Button type="button" onClick={startCheckout} disabled={pending}>
+                  {pending ? "Opening checkout…" : "Continue to Secure Checkout ↗"}
+                </Button>) : (<Link href="/serial" className={buttonVariants()}>
+                  Start Reading ↗
+                </Link>)}
+              <Link href="/dashboard" className={buttonVariants({ variant: "secondary" })}>
+                Go to My Shelf
+              </Link>
+            </div>
+            {error && (<p role="alert" className={`mx-auto mt-5 max-w-[44ch] ${alertText}`}>{error}</p>)}
+          </div>)}
+      </Login7>
     </main>);
 }

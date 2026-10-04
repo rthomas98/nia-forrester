@@ -15,7 +15,7 @@ export default function Page() {
       intro="The Reader Hub collects only the information needed to run accounts, deliver requested reading and event services, process memberships, and improve the site."
       sections={[
         {
-          title: "Information we collect",
+          title: "Information We Collect",
           body: (
             <p>
               This may include your name, email address, account preferences,
@@ -26,7 +26,7 @@ export default function Page() {
           ),
         },
         {
-          title: "How information is used",
+          title: "How Information Is Used",
           body: (
             <p>
               Information is used to authenticate you, personalize your
@@ -37,7 +37,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Service providers",
+          title: "Service Providers",
           body: (
             <p>
               The site uses Better Auth and Convex for accounts and application
@@ -49,7 +49,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Choices and retention",
+          title: "Choices and Retention",
           body: (
             <p>
               You may unsubscribe from editorial email at any time, update
@@ -60,7 +60,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Security and children",
+          title: "Security and Children",
           body: (
             <p>
               Reasonable technical and organizational safeguards are used, but

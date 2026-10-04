@@ -2,6 +2,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-context";
+import { Button } from "@/components/ui/button";
+import { alertText } from "@/lib/typography";
 
 export function MembershipAction({ name, tier, annual, className, children }: { name: string; tier: "reader" | "inner" | "writers" | null; annual: boolean; className: string; children: React.ReactNode }) {
   const { authed, ready } = useAuth();
@@ -17,7 +19,7 @@ export function MembershipAction({ name, tier, annual, className, children }: { 
     } catch { setError("We couldn’t reach checkout. Please try again."); } finally { setPending(false); }
   }
   if (!authed || !tier) return <Link href={authed ? "/dashboard" : `/signup?tier=${encodeURIComponent(name)}&cadence=${annual ? "annual" : "monthly"}`} className={className}>{children}</Link>;
-  return <><button type="button" className={className} disabled={!ready || pending} onClick={() => void checkout()}>{pending ? "Opening Checkout…" : children}</button>{error && <p role="alert" className="mb-4 text-sm">{error}</p>}</>;
+  return <><button type="button" className={className} disabled={!ready || pending} onClick={() => void checkout()}>{pending ? "Opening Checkout…" : children}</button>{error && <p role="alert" className={`mt-3 ${alertText}`}>{error}</p>}</>;
 }
 
 export function ManageMembership() {
@@ -34,5 +36,5 @@ export function ManageMembership() {
       window.location.assign(data.url);
     } catch { setError("We couldn’t open billing. Please try again."); } finally { setPending(false); }
   }
-  return <div className="my-6 text-center"><button type="button" disabled={pending} onClick={() => void manage()} className="min-h-11 font-semibold underline">{pending ? "Opening Billing…" : "Manage Existing Membership"}</button>{error && <p role="alert">{error}</p>}</div>;
+  return <div className="mt-10 text-center"><Button type="button" variant="link" size="link" disabled={pending} onClick={() => void manage()}>{pending ? "Opening Billing…" : "Manage Existing Membership"}</Button>{error && <p role="alert" className={`mt-2 ${alertText}`}>{error}</p>}</div>;
 }

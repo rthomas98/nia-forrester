@@ -1,7 +1,40 @@
 import { ConvexError } from "convex/values";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx, MutationCtx } from "./_generated/server";
-import { requireAuth } from "./security";
+import { hasTier, requireAuth } from "./security";
+
+/** Call only after the caller's paid Circle membership has been checked. */
+export async function canAccessClub(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+  subscription: Doc<"subscriptions"> | null,
+  clubId: Id<"clubs">,
+) {
+  const club = await ctx.db.get(clubId);
+  if (
+    !club || club.status !== "open" || !subscription ||
+    !isPaidSubscription(subscription, Date.now()) ||
+    !hasTier(subscription.planKey, club.accessTier)
+  ) return false;
+  const membership = await ctx.db
+    .query("clubMemberships")
+    .withIndex("by_club_user", (q) => q.eq("clubId", clubId).eq("authUserId", userId))
+    .unique();
+  return membership !== null;
+}
+
+export async function requireClubAccess(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+  subscription: Doc<"subscriptions">,
+  clubId: Id<"clubs">,
+) {
+  if (!await canAccessClub(ctx, userId, subscription, clubId))
+    throw new ConvexError({
+      code: "FORBIDDEN",
+      message: "An eligible paid membership and membership in this open club are required.",
+    });
+}
 
 export function isPaidSubscription(
   subscription: Pick<

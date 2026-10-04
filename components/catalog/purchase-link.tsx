@@ -32,7 +32,7 @@ export function PurchaseLink({
         </span>
       </a>
       {book.isAffiliate ? (
-        <p className="m-0 max-w-[46ch] font-sans text-xs leading-[1.5] text-[var(--color-plum-muted)]">
+        <p className="m-0 max-w-[46ch] text-tiny text-taupe">
           Affiliate link — Nia may earn a small commission if you buy through
           it, at no extra cost to you.
         </p>

@@ -2,7 +2,7 @@
 
 The base is codex/reader-hub-launch, which includes the full reader hub beyond main. Local disk-maintenance changes remain in the primary checkout; they are not copied into workers.
 
-Codex GPT-5.6 Sol medium Standard owns backend/integration. Fable 5.1 medium owns frontend/design. Use Manual permissions and reciprocal review of exact final revisions.
+Codex GPT-6.1 Sol (`gpt-6.1-sol`) medium Standard owns backend/integration. Claude Opus 5.5 (`claude-opus-5-5`) medium owns frontend/design. Verify requested versus effective launch settings and provider acceptance; report unavailable models instead of substituting. Use Manual permissions and reciprocal review of exact final revisions.
 
 ## Preparation
 

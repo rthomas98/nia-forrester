@@ -13,6 +13,7 @@ import type * as auth from "../auth.js";
 import type * as avatars from "../avatars.js";
 import type * as billing from "../billing.js";
 import type * as catalog from "../catalog.js";
+import type * as catalogBootstrap from "../catalogBootstrap.js";
 import type * as catalogPolicy from "../catalogPolicy.js";
 import type * as community from "../community.js";
 import type * as communityAccess from "../communityAccess.js";
@@ -31,6 +32,7 @@ import type * as progress from "../progress.js";
 import type * as readerCircle from "../readerCircle.js";
 import type * as security from "../security.js";
 import type * as seed from "../seed.js";
+import type * as serialBootstrap from "../serialBootstrap.js";
 import type * as site from "../site.js";
 
 import type {
@@ -45,6 +47,7 @@ declare const fullApi: ApiFromModules<{
   avatars: typeof avatars;
   billing: typeof billing;
   catalog: typeof catalog;
+  catalogBootstrap: typeof catalogBootstrap;
   catalogPolicy: typeof catalogPolicy;
   community: typeof community;
   communityAccess: typeof communityAccess;
@@ -63,6 +66,7 @@ declare const fullApi: ApiFromModules<{
   readerCircle: typeof readerCircle;
   security: typeof security;
   seed: typeof seed;
+  serialBootstrap: typeof serialBootstrap;
   site: typeof site;
 }>;
 

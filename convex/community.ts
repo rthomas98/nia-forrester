@@ -1,12 +1,12 @@
 import { v, ConvexError } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { requireRole } from "./security";
-import { requirePaidMember } from "./communityAccess";
+import { canAccessClub, requireClubAccess, requirePaidMember } from "./communityAccess";
 
 export const listThreads = query({
   args: { limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
-    await requirePaidMember(ctx);
+    const { user, subscription } = await requirePaidMember(ctx);
     if (
       args.limit !== undefined &&
       (!Number.isInteger(args.limit) || args.limit < 1)
@@ -15,11 +15,18 @@ export const listThreads = query({
         code: "VALIDATION_ERROR",
         message: "Invalid limit",
       });
-    return ctx.db
+    const rows = ctx.db
       .query("threads")
       .withIndex("by_status_activity", (q) => q.eq("status", "open"))
-      .order("desc")
-      .take(Math.min(args.limit ?? 30, 50));
+      .order("desc");
+    const visible = [];
+    const limit = Math.min(args.limit ?? 30, 50);
+    for await (const row of rows) {
+      if (row.clubId && !await canAccessClub(ctx, user._id, subscription, row.clubId)) continue;
+      visible.push(row);
+      if (visible.length === limit) break;
+    }
+    return visible;
   },
 });
 
@@ -32,7 +39,7 @@ export const createThread = mutation({
     clubId: v.optional(v.id("clubs")),
   },
   handler: async (ctx, args) => {
-    const { user } = await requirePaidMember(ctx);
+    const { user, subscription } = await requirePaidMember(ctx);
     if (
       !args.title.trim() ||
       args.title.length > 160 ||
@@ -47,18 +54,7 @@ export const createThread = mutation({
           "Provide a title (up to 160 characters) and a message (up to 10,000 characters).",
       });
     if (args.clubId) {
-      const club = await ctx.db.get(args.clubId);
-      const member = await ctx.db
-        .query("clubMemberships")
-        .withIndex("by_club_user", (q) =>
-          q.eq("clubId", args.clubId!).eq("authUserId", user._id),
-        )
-        .unique();
-      if (!club || club.status !== "open" || !member)
-        throw new ConvexError({
-          code: "FORBIDDEN",
-          message: "Join this open club first.",
-        });
+      await requireClubAccess(ctx, user._id, subscription, args.clubId);
     }
     if (args.contentId) {
       const content = await ctx.db.get(args.contentId);
@@ -100,7 +96,7 @@ export const reply = mutation({
     spoilerChapter: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { user } = await requirePaidMember(ctx);
+    const { user, subscription } = await requirePaidMember(ctx);
     if (!args.body.trim() || args.body.length > 10000)
       throw new ConvexError({
         code: "VALIDATION_ERROR",
@@ -130,6 +126,7 @@ export const reply = mutation({
     if (!thread || thread.status !== "open") {
       throw new Error("This discussion is not open for replies");
     }
+    if (thread.clubId) await requireClubAccess(ctx, user._id, subscription, thread.clubId);
     const now = Date.now();
     const postId = await ctx.db.insert("posts", {
       ...args,

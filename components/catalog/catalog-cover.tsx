@@ -25,16 +25,41 @@ export function CatalogCover({
   variant?: keyof typeof titleSizes;
   eager?: boolean;
 }) {
-  const path = coverPath(book);
+  return (
+    <CoverFrame
+      title={book.title}
+      src={coverPath(book)}
+      sizes={sizes}
+      variant={variant}
+      eager={eager}
+    />
+  );
+}
+
+/** A cover image or, when missing or broken, the typographic brand cover. */
+export function CoverFrame({
+  title,
+  src,
+  sizes,
+  variant = "shelf",
+  eager = false,
+}: {
+  title: string;
+  src: string | null;
+  sizes: string;
+  variant?: keyof typeof titleSizes;
+  eager?: boolean;
+}) {
+  const path = src;
   const [failedPath, setFailedPath] = useState<string | null>(null);
   const showImage = path !== null && failedPath !== path;
 
   return (
-    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[3px] bg-[linear-gradient(160deg,var(--color-deep-plum)_0%,var(--color-hot-magenta)_100%)] shadow-[0_26px_46px_-22px_rgba(53,5,73,0.52),0_8px_18px_-8px_rgba(53,5,73,0.24)] ring-1 ring-white/20">
+    <div className="relative aspect-[2/3] w-full overflow-hidden rounded-image bg-wine-raised shadow-[0_24px_40px_-24px_rgb(0_0_0/0.75)] ring-1 ring-hairline">
       {showImage ? (
         <Image
           src={path}
-          alt={`Cover of ${book.title}`}
+          alt={`Cover of ${title}`}
           fill
           sizes={sizes}
           loading={eager ? "eager" : "lazy"}
@@ -46,11 +71,11 @@ export function CatalogCover({
         <div
           className={`flex h-full flex-col justify-between ${titleSizes[variant]}`}
         >
-          <span className="font-sans text-[8px] font-semibold uppercase tracking-[0.14em] text-[rgba(196,185,203,0.85)]">
+          <span className="font-ui text-[0.5625rem] font-semibold tracking-[0.16em] text-champagne uppercase">
             Cover Unavailable
           </span>
-          <span className="break-words font-serif font-medium leading-[1.05] text-[var(--color-brand-surface)]">
-            {book.title}
+          <span className="font-display leading-[1.05] font-semibold break-words text-cream">
+            {title}
           </span>
         </div>
       )}

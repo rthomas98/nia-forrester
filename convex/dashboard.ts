@@ -1,6 +1,6 @@
 import { query } from "./_generated/server";
 import { requireAuth, hasTier } from "./security";
-import { paidSubscription } from "./communityAccess";
+import { canAccessClub, paidSubscription } from "./communityAccess";
 
 /** Owner-scoped summary: no content bodies, emails, or meeting URLs. */
 export const summary = query({
@@ -29,11 +29,7 @@ export const summary = query({
     if (communityAccess === "member") {
       const rows = await ctx.db.query("threads").withIndex("by_status_activity", q => q.eq("status", "open")).order("desc").collect();
       for (const row of rows) {
-        if (row.clubId) {
-          const club = await ctx.db.get(row.clubId);
-          const joined = await ctx.db.query("clubMemberships").withIndex("by_club_user", q => q.eq("clubId", row.clubId!).eq("authUserId", user._id)).unique();
-          if (!club || club.status !== "open" || !hasTier(tier, club.accessTier) || !joined) continue;
-        }
+        if (row.clubId && !await canAccessClub(ctx, user._id, subscription, row.clubId)) continue;
         discussions.push({ id: row._id, title: row.title });
         if (discussions.length === 4) break;
       }

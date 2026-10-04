@@ -14,7 +14,7 @@ export default function Page() {
     return (
       <PrelaunchPage
         eyebrow="Community is warming up"
-        title="The room opens when it is ready."
+        title="The Room Opens When It Is Ready"
         body="Book clubs, chapter conversations, and live reads are being prepared with the moderation and launch content they deserve. Join the weekly note to hear when the doors open."
       />
     );

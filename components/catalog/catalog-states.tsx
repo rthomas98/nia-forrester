@@ -4,6 +4,9 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { catalogErrorCode } from "@/lib/catalog";
 import { primaryAction } from "@/lib/catalog-styles";
+import { Card } from "@/components/ui/card";
+
+export type HeadingLevel = "h1" | "h2";
 
 export function StatePanel({
   eyebrow,
@@ -11,29 +14,29 @@ export function StatePanel({
   children,
   actions,
   role,
+  headingLevel = "h2",
 }: {
   eyebrow: string;
   title: string;
   children: ReactNode;
   actions?: ReactNode;
   role?: "status" | "alert";
+  headingLevel?: HeadingLevel;
 }) {
+  const Heading = headingLevel;
   return (
-    <div
-      role={role}
-      className="rounded-[28px] border border-[rgba(53,5,73,0.1)] bg-[var(--color-brand-surface)] px-6 py-9 sm:px-10 sm:py-11"
-    >
-      <div className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-hot-magenta)]">
+    <Card role={role} className="px-6 py-9 sm:px-10 sm:py-11">
+      <div className="font-ui text-tiny font-semibold tracking-[0.22em] text-champagne uppercase">
         {eyebrow}
       </div>
-      <h2 className="mb-0 mt-2.5 text-balance font-sans text-2xl font-bold tracking-[-0.02em] text-[var(--color-deep-plum)] sm:text-[28px]">
+      <Heading className="mt-3 mb-0 font-display text-h4 font-semibold text-balance text-cream">
         {title}
-      </h2>
-      <p className="mb-0 mt-3 max-w-[60ch] text-pretty text-[15px] leading-[1.65] text-[var(--color-plum-copy)]">
+      </Heading>
+      <p className="mt-3 mb-0 max-w-[60ch] text-pretty text-body">
         {children}
       </p>
       {actions ? <div className="mt-6 flex flex-wrap gap-3">{actions}</div> : null}
-    </div>
+    </Card>
   );
 }
 
@@ -45,9 +48,10 @@ function RetryButton({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-export function CatalogUnconfigured() {
+export function CatalogUnconfigured({ headingLevel }: { headingLevel?: HeadingLevel }) {
   return (
     <StatePanel
+      headingLevel={headingLevel}
       role="status"
       eyebrow="Library unavailable"
       title="The library isn’t connected yet"
@@ -59,9 +63,10 @@ export function CatalogUnconfigured() {
   );
 }
 
-export function CatalogOffline() {
+export function CatalogOffline({ headingLevel }: { headingLevel?: HeadingLevel }) {
   return (
     <StatePanel
+      headingLevel={headingLevel}
       role="alert"
       eyebrow="Connection problem"
       title="We can’t reach the library right now"
@@ -77,15 +82,18 @@ export function CatalogOffline() {
 export function CatalogQueryError({
   error,
   onRetry,
+  headingLevel,
 }: {
   error: unknown;
   onRetry: () => void;
+  headingLevel?: HeadingLevel;
 }) {
   const code = catalogErrorCode(error);
 
   if (code === "UNAUTHENTICATED") {
     return (
       <StatePanel
+        headingLevel={headingLevel}
         role="alert"
         eyebrow="Sign in required"
         title="Sign in to continue"
@@ -103,6 +111,7 @@ export function CatalogQueryError({
   if (code === "FORBIDDEN") {
     return (
       <StatePanel
+        headingLevel={headingLevel}
         role="alert"
         eyebrow="Access denied"
         title="Your account can’t view this"
@@ -114,6 +123,7 @@ export function CatalogQueryError({
 
   return (
     <StatePanel
+      headingLevel={headingLevel}
       role="alert"
       eyebrow="Something went wrong"
       title="The library couldn’t load"
@@ -138,9 +148,10 @@ export function CatalogEmpty() {
   );
 }
 
-export function BookNotFound() {
+export function BookNotFound({ headingLevel }: { headingLevel?: HeadingLevel }) {
   return (
     <StatePanel
+      headingLevel={headingLevel}
       eyebrow="Book not found"
       title="We couldn’t find that book"
       actions={
@@ -156,7 +167,7 @@ export function BookNotFound() {
 }
 
 const skeletonBlock =
-  "animate-pulse rounded-md bg-[rgba(53,5,73,0.1)] motion-reduce:animate-none";
+  "animate-pulse rounded-md bg-wine-raised motion-reduce:animate-none";
 
 export function ShelfSkeleton({ rows = 2 }: { rows?: number }) {
   return (
@@ -184,7 +195,7 @@ export function BookDetailSkeleton() {
   return (
     <div
       role="status"
-      className="grid grid-cols-1 gap-8 rounded-[28px] bg-[var(--color-brand-surface)] p-6 sm:p-10 md:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)] md:gap-12 lg:rounded-[36px] lg:p-14"
+      className="grid grid-cols-1 gap-8 rounded-card border border-hairline bg-wine-card p-6 sm:p-10 md:grid-cols-[minmax(220px,0.7fr)_minmax(0,1.3fr)] md:gap-12 lg:p-14"
     >
       <span className="sr-only">Loading book details…</span>
       <div
@@ -197,7 +208,7 @@ export function BookDetailSkeleton() {
         <div className={`mt-7 h-4 w-full ${skeletonBlock}`} />
         <div className={`mt-3 h-4 w-11/12 ${skeletonBlock}`} />
         <div className={`mt-3 h-4 w-3/5 ${skeletonBlock}`} />
-        <div className={`mt-9 h-12 w-44 rounded-full ${skeletonBlock}`} />
+        <div className={`mt-9 h-12 w-44 ${skeletonBlock}`} />
       </div>
     </div>
   );
@@ -210,7 +221,7 @@ export function PanelSkeleton({ label }: { label: string }) {
       <div aria-hidden="true">
         <div className={`h-4 w-40 ${skeletonBlock}`} />
         <div className={`mt-4 h-3 w-full rounded-full ${skeletonBlock}`} />
-        <div className={`mt-5 h-11 w-36 rounded-full ${skeletonBlock}`} />
+        <div className={`mt-5 h-11 w-36 ${skeletonBlock}`} />
       </div>
     </div>
   );

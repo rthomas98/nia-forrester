@@ -4,6 +4,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-context";
 import { authClient } from "@/lib/auth-client";
+import Image from "next/image";
+import { Login7 } from "@/components/relume/login7";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { alertText, statusText, textLink } from "@/lib/typography";
 export default function SignInPage() {
     const router = useRouter();
     const { configured } = useAuth();
@@ -70,78 +76,57 @@ export default function SignInPage() {
             setPending(false);
         }
     };
-    return (<main className="mx-auto max-w-[1240px] px-10 pb-[72px] pt-10 max-[900px]:px-8 max-[900px]:py-12 max-[640px]:px-5 max-[640px]:py-9">
-      <div className="grid min-h-[600px] grid-cols-2 overflow-hidden rounded-[36px] shadow-[0_12px_28px_rgba(53,5,73,0.08),0_2px_6px_rgba(53,5,73,0.04)] max-[900px]:grid-cols-1 max-[640px]:min-h-0 max-[640px]:rounded-3xl">
-        <div className="flex flex-col justify-center bg-[var(--color-brand-surface)] p-[clamp(40px,4.5vw,64px)] max-[640px]:p-6 max-[640px]:py-8">
-          <div className="[max-width:400px] w-full [margin:0_auto]">
-            <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:14px]">
-              Welcome back
-            </div>
-            <h1 className="font-sans [font-weight:700] [font-size:38px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_8px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-              Pick up where you left off
-            </h1>
-            <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_32px] text-pretty">
-              Your library, your chapters, your Circle.
-            </p>
-
-            <form onSubmit={(e) => {
+    return (<main>
+      <Login7
+        tagline="Welcome Back"
+        title="Pick Up Where You Left Off"
+        description={<p>Your library, your chapters, your Circle.</p>}
+        image={<Image src="/images/nia-hero.jpg" alt="Portrait of Nia Forrester" fill sizes="50vw" className="object-cover object-center" />}
+        footer={<>
+            <p>New here?</p>
+            <Link href="/membership" className={textLink}>
+              Join the Circle ↗
+            </Link>
+          </>}
+      >
+        <form onSubmit={(e) => {
             e.preventDefault();
             handleSignIn();
-        }} className="flex flex-col [gap:14px]">
-              <label className="flex flex-col [gap:7px]">
-                <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                  Email
-                </span>
-                <input type="email" name="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" className="[border:1px_solid_rgba(53,5,73,0.16)] [background:var(--color-soft-lavender)] [border-radius:14px] [padding:13px_16px] font-sans [font-size:15px] [color:var(--color-deep-plum)]"/>
-              </label>
-              <label className="flex flex-col [gap:7px]">
-                <div className="flex items-baseline justify-between">
-                  <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                    Password
-                  </span>
-                  <Link href="/reset" className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:12px] [color:var(--color-plum-muted)] [padding:0px]">
-                    Forgot it?
-                  </Link>
-                </div>
-                <input type="password" name="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••" className="[border:1px_solid_rgba(53,5,73,0.16)] [background:var(--color-soft-lavender)] [border-radius:14px] [padding:13px_16px] font-sans [font-size:15px] [color:var(--color-deep-plum)]"/>
-              </label>
-              {(error || notice) && (<p role={error ? "alert" : "status"} className={`mt-0.5 text-[13px] leading-normal ${error ? "text-[var(--color-hot-magenta)]" : "text-[var(--color-deep-plum)]"}`}>
-                  {error || notice}
-                </p>)}
-              <button type="submit" disabled={pending} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [margin-top:8px] [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-                {pending ? "Signing in…" : "Sign in"}
-              </button>
-            </form>
-
-            <div className="flex items-center [gap:14px] [margin:24px_0]">
-              <span className="[flex:1] [height:1px] [background:rgba(53,5,73,0.08)]"/>
-              <span className="font-sans [font-size:12px] [font-weight:500] [color:var(--color-plum-faint)]">
-                or
-              </span>
-              <span className="[flex:1] [height:1px] [background:rgba(53,5,73,0.08)]"/>
-            </div>
-            <button type="button" onClick={handleMagicLink} disabled={pending} className="transition duration-150 hover:border-[var(--color-plum-copy)] hover:bg-black/5 w-full [background:transparent] [color:var(--color-deep-plum)] [border:1px_solid_rgba(53,5,73,0.16)] [padding:14px_24px] [border-radius:999px] font-sans [font-weight:600] [font-size:14px]">
-              Email me a sign-in link
-            </button>
-
-            <p className="[font-size:14px] [color:var(--color-plum-copy)] [margin:28px_0_0] text-center text-pretty">
-              New here?{" "}
-              <Link href="/membership" className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:14px] [color:var(--color-hot-magenta)] [padding:0px]">
-                Join the Circle ↗
+        }} className="grid grid-cols-1 gap-6">
+          <div className="grid w-full items-center">
+            <Label htmlFor="signin-email" className="mb-2">
+              Email
+            </Label>
+            <Input id="signin-email" type="email" name="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com"/>
+          </div>
+          <div className="grid w-full grid-cols-1 items-center">
+            <div className="flex items-start justify-between">
+              <Label htmlFor="signin-password" className="mb-2">
+                Password
+              </Label>
+              <Link href="/reset" className="text-small text-champagne underline underline-offset-4 hover:text-cream focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne">
+                Forgot it?
               </Link>
-            </p>
+            </div>
+            <Input id="signin-password" type="password" name="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} placeholder="••••••••"/>
           </div>
-        </div>
-
-        <div className="[background:var(--color-deep-plum)] [padding:clamp(40px,4.5vw,64px)] flex flex-col justify-between [gap:48px]">
-          <div className="flex items-baseline [gap:8px]">
-            <span className="[width:9px] [height:9px] [border-radius:999px] [background:var(--color-hot-magenta)] inline-block"/>
-            <span className="font-sans [font-weight:700] [font-size:16px] [letter-spacing:-0.01em] [color:var(--color-soft-lavender)]">
-              The Reader Circle
-            </span>
+          {(error || notice) && (<p role={error ? "alert" : "status"} className={error ? alertText : statusText}>
+              {error || notice}
+            </p>)}
+          <div className="grid grid-cols-1 gap-4">
+            <Button type="submit" disabled={pending}>
+              {pending ? "Signing in…" : "Sign In"}
+            </Button>
+            <div className="flex items-center gap-4" aria-hidden="true">
+              <span className="h-px flex-1 bg-scheme-border"/>
+              <span className="font-ui text-tiny tracking-[0.16em] text-taupe uppercase">or</span>
+              <span className="h-px flex-1 bg-scheme-border"/>
+            </div>
+            <Button type="button" variant="secondary" onClick={handleMagicLink} disabled={pending}>
+              Email Me a Sign-In Link
+            </Button>
           </div>
-          <p className="text-xl text-[var(--color-soft-lavender)]">Sign in to manage your library, membership, and studio requests.</p>
-        </div>
-      </div>
+        </form>
+      </Login7>
     </main>);
 }

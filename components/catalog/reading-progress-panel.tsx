@@ -9,29 +9,28 @@ import { QueryBoundary } from "@/components/catalog/query-boundary";
 import { useCatalogQuery } from "@/components/catalog/use-catalog-query";
 import { catalogApi, catalogErrorCode } from "@/lib/catalog";
 import { focusRing, primaryAction, secondaryAction } from "@/lib/catalog-styles";
+import { Card } from "@/components/ui/card";
 
 const PROGRESS_STEP = 5;
 
-const bodyCopy =
-  "m-0 max-w-[52ch] text-pretty text-[15px] leading-[1.65] text-[var(--color-plum-copy)]";
+const bodyCopy = "m-0 max-w-[52ch] text-pretty text-body";
 
 function PanelShell({ children }: { children: ReactNode }) {
   return (
-    <section
-      aria-labelledby="reading-progress-heading"
-      className="rounded-[28px] bg-[var(--color-brand-surface)] p-6 shadow-[0_4px_12px_rgba(53,5,73,0.06)] sm:p-8"
-    >
-      <div className="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-hot-magenta)]">
-        Your reading
-      </div>
-      <h2
-        id="reading-progress-heading"
-        className="mb-4 mt-2 font-sans text-2xl font-bold tracking-[-0.02em] text-[var(--color-deep-plum)]"
-      >
-        Track your progress
-      </h2>
-      {children}
-    </section>
+    <Card>
+      <section aria-labelledby="reading-progress-heading" className="p-6 sm:p-8">
+        <div className="font-ui text-tiny font-semibold tracking-[0.22em] text-champagne uppercase">
+          Your Reading
+        </div>
+        <h2
+          id="reading-progress-heading"
+          className="mt-2 mb-4 font-display text-h4 font-semibold text-cream"
+        >
+          Track Your Progress
+        </h2>
+        {children}
+      </section>
+    </Card>
   );
 }
 
@@ -118,7 +117,7 @@ function ProgressTracker({ slug }: { slug: string }) {
   return (
     <>
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="m-0 font-sans text-[15px] font-semibold text-[var(--color-deep-plum)]">
+        <p className="m-0 font-ui text-small font-semibold text-cream">
           {saved === null
             ? "Not started yet"
             : saved.completed
@@ -126,7 +125,7 @@ function ProgressTracker({ slug }: { slug: string }) {
               : `${savedPercent}% read`}
         </p>
         {saved ? (
-          <p className="m-0 font-sans text-xs text-[var(--color-plum-muted)]">
+          <p className="m-0 text-tiny text-taupe">
             Updated{" "}
             {new Date(saved.updatedAt).toLocaleDateString(undefined, {
               dateStyle: "medium",
@@ -138,18 +137,18 @@ function ProgressTracker({ slug }: { slug: string }) {
         value={savedPercent}
         max={100}
         aria-label="Saved reading progress"
-        className="mt-3 block h-2.5 w-full appearance-none overflow-hidden rounded-full bg-[rgba(53,5,73,0.1)] [&::-moz-progress-bar]:bg-[var(--color-hot-magenta)] [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[var(--color-hot-magenta)]"
+        className="mt-3 block h-1.5 w-full appearance-none overflow-hidden rounded-full bg-wine-sunken [&::-moz-progress-bar]:bg-champagne [&::-webkit-progress-bar]:bg-transparent [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-champagne"
       />
 
       <form onSubmit={handleSubmit} className="mt-6">
         <label
           htmlFor="reading-progress-input"
-          className="flex items-baseline justify-between gap-3 font-sans text-sm font-semibold text-[var(--color-deep-plum)]"
+          className="flex items-baseline justify-between gap-3 font-ui text-small font-semibold text-cream"
         >
           How far along are you?
           <output
             htmlFor="reading-progress-input"
-            className="font-sans text-sm font-bold tabular-nums text-[var(--color-hot-magenta)]"
+            className="font-ui text-small font-bold text-champagne tabular-nums"
           >
             {percent}%
           </output>
@@ -166,7 +165,7 @@ function ProgressTracker({ slug }: { slug: string }) {
             setDraft(Number(event.target.value));
             setSave({ status: "idle" });
           }}
-          className={`mt-1 h-11 w-full cursor-pointer rounded-full accent-[var(--color-hot-magenta)] disabled:cursor-not-allowed disabled:opacity-60 ${focusRing}`}
+          className={`mt-1 h-11 w-full cursor-pointer rounded-full accent-champagne disabled:cursor-not-allowed disabled:opacity-60 ${focusRing}`}
         />
         <div className="mt-3 flex flex-wrap gap-3">
           <button
@@ -189,10 +188,8 @@ function ProgressTracker({ slug }: { slug: string }) {
         </div>
         <p
           role={save.status === "error" ? "alert" : "status"}
-          className={`mb-0 mt-3 min-h-5 font-sans text-[13px] font-semibold ${
-            save.status === "error"
-              ? "text-[var(--color-hot-magenta)]"
-              : "text-[var(--color-plum-copy)]"
+          className={`mt-3 mb-0 min-h-5 text-small font-semibold ${
+            save.status === "error" ? "text-rose" : "text-body"
           }`}
         >
           {save.status === "saved" ? "Progress saved." : null}

@@ -12,6 +12,7 @@ import {
 } from "@/components/catalog/catalog-states";
 import { QueryBoundary } from "@/components/catalog/query-boundary";
 import { useCatalogQuery } from "@/components/catalog/use-catalog-query";
+import { product1Grid } from "@/components/relume/product1";
 import {
   CATALOG_LIST_LIMIT,
   catalogApi,
@@ -27,8 +28,7 @@ const SHELF_SIZES = "(min-width: 640px) 150px, 132px";
 const GRID_SIZES =
   "(min-width: 1024px) 170px, (min-width: 768px) 22vw, (min-width: 640px) 30vw, 45vw";
 
-const bookGrid =
-  "m-0 grid list-none grid-cols-2 gap-x-5 gap-y-8 p-0 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6";
+const bookGrid = product1Grid;
 
 function SeriesShelves() {
   const series = useCatalogQuery(catalogApi.listPublishedSeries, {});
@@ -42,25 +42,25 @@ function SeriesShelves() {
   if (shelves.length === 0) return null;
 
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-14">
       {shelves.map((entry) => {
         const shelfBooks = inReadingOrder(entry.books);
         return (
           <section key={entry._id} aria-labelledby={`series-${entry._id}`}>
-            <div className="mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <div className="mb-5 flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-hairline pb-3">
               <h3
                 id={`series-${entry._id}`}
-                className="m-0 font-sans text-xl font-bold tracking-[-0.01em] text-[var(--color-deep-plum)]"
+                className="m-0 font-display text-h5 font-semibold text-cream"
               >
                 {entry.title}
               </h3>
-              <span className="font-sans text-xs uppercase tracking-[0.06em] text-[var(--color-plum-muted)]">
+              <span className="font-ui text-tiny font-semibold tracking-[0.14em] text-taupe uppercase">
                 {shelfBooks.length === 1
                   ? "1 book"
                   : `${shelfBooks.length} books · in reading order`}
               </span>
             </div>
-            <ul className="-mx-2 my-0 flex list-none snap-x snap-proximity gap-5 overflow-x-auto overscroll-x-contain px-2 pb-4 pt-2">
+            <ul className="-mx-2 my-0 flex list-none snap-x snap-proximity gap-6 overflow-x-auto overscroll-x-contain px-2 pt-2 pb-4">
               {shelfBooks.map((book) => (
                 <li
                   key={book._id}
@@ -86,7 +86,7 @@ function Standalones() {
   if (books.status === "offline") {
     // The series shelf above already raises the connection alert.
     return (
-      <p className="m-0 font-sans text-sm text-[var(--color-plum-copy)]">
+      <p className="m-0 text-small text-body">
         Standalone titles will appear once the library reconnects.
       </p>
     );
@@ -102,7 +102,7 @@ function Standalones() {
     <section aria-labelledby="standalones-heading">
       <h3
         id="standalones-heading"
-        className="mb-5 mt-0 font-sans text-xl font-bold tracking-[-0.01em] text-[var(--color-deep-plum)]"
+        className="mt-0 mb-6 border-b border-hairline pb-3 font-display text-h5 font-semibold text-cream"
       >
         Standalones
       </h3>
@@ -181,7 +181,7 @@ export function CatalogLibrary({ view }: { view: LibraryView }) {
 
   // Each query fails on its own, so a series error still leaves standalones.
   return (
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-14">
       <Bounded>
         <SeriesShelves />
       </Bounded>

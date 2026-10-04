@@ -43,7 +43,7 @@ export const ensure = mutation({
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean);
-    const role = adminEmails.includes(user.email.toLowerCase())
+    const role = user.emailVerified === true && adminEmails.includes(user.email.trim().toLowerCase())
       ? ("admin" as const)
       : ("reader" as const);
 

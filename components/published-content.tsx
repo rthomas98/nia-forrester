@@ -1,17 +1,155 @@
 "use client";
-import Link from "next/link";
 import Image from "next/image";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { authIsConfigured } from "@/lib/auth-client";
 import { QueryBoundary } from "@/components/catalog/query-boundary";
-function Feed({kind}:{kind:"serial"|"essay"}) {
-  const rows=useQuery(api.content.listPublished,{kind});
-  if (!rows) return <p role="status">Loading published {kind === "essay" ? "essays" : "serials"}…</p>;
-  return <div className="grid gap-5 sm:grid-cols-2">{rows.length ? rows.map(r=><article key={r._id} className="rounded-3xl bg-[var(--color-brand-surface)] p-6"><h3 className="text-2xl font-semibold">{r.title}</h3><p className="my-4">{r.excerpt}</p><Link className="inline-flex min-h-11 items-center font-semibold underline" href={`/serial?slug=${encodeURIComponent(r.slug)}`}>Read ↗</Link></article>) : <p>No {kind === "essay" ? "essays" : "serials"} have been published here yet.</p>}</div>;
+import { StatePanel } from "@/components/catalog/catalog-states";
+import { Blog60Card, blog60Grid } from "@/components/relume/blog60";
+import { Product1Item, product1Grid } from "@/components/relume/product1";
+import { Button } from "@/components/ui/button";
+
+const label = (kind: "serial" | "essay") => (kind === "essay" ? "essays" : "serials");
+
+function FeedSkeleton() {
+  return (
+    <div role="status" className={blog60Grid}>
+      <span className="sr-only">Loading published writing…</span>
+      {[0, 1].map((n) => (
+        <div key={n} aria-hidden="true" className="h-64 animate-pulse rounded-card border border-hairline bg-wine-card motion-reduce:animate-none" />
+      ))}
+    </div>
+  );
 }
-export function PublishedContent({kind}:{kind:"serial"|"essay"}) { return authIsConfigured ? <QueryBoundary fallback={(_e,retry)=><div role="alert">Published content is unavailable. <button onClick={retry}>Retry</button></div>}><Feed kind={kind}/></QueryBoundary> : <p>Published content is not connected yet.</p>; }
-function Count({field}:{field:"books"|"series"}) { const summary=useQuery(api.site.summary,{}); return <>{summary ? summary[field] : "—"}</>; }
-export function CatalogCount({field}:{field:"books"|"series"}) { return authIsConfigured ? <QueryBoundary fallback={()=> <span>—</span>}><Count field={field}/></QueryBoundary> : <span>—</span>; }
-function Shelf() { const data=useQuery(api.site.summary,{}); if(!data)return <p role="status">Loading books…</p>; return <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-6">{data.featured.length ? data.featured.map(b=><Link key={b.id} href={`/read/${b.slug}`} className="min-w-0">{b.coverUrl && <Image src={b.coverUrl} alt={`Cover of ${b.title}`} width={200} height={300} sizes="(max-width:640px) 45vw, 180px" className="mb-3 aspect-[2/3] w-full rounded object-cover"/>}<span className="block text-lg font-semibold">{b.title}</span><span className="mt-3 inline-block text-sm underline">View Book ↗</span></Link>) : <p>No books published yet.</p>}</div>; }
-export function PublishedShelf(){return authIsConfigured ? <QueryBoundary fallback={()=> <p>Books are temporarily unavailable.</p>}><Shelf/></QueryBoundary> : <p>The catalog is not connected yet.</p>;}
+
+function Feed({ kind }: { kind: "serial" | "essay" }) {
+  const rows = useQuery(api.content.listPublished, { kind });
+  if (!rows) return <FeedSkeleton />;
+  if (!rows.length) {
+    return (
+      <StatePanel role="status" eyebrow="Nothing published yet" title={`No ${label(kind)} yet`}>
+        No {label(kind)} have been published here yet.
+      </StatePanel>
+    );
+  }
+  return (
+    <div className={blog60Grid}>
+      {rows.map((r) => (
+        <Blog60Card
+          key={r._id}
+          url={`/serial?slug=${encodeURIComponent(r.slug)}`}
+          image={r.coverUrl?.startsWith("/images/") ? { src: r.coverUrl, alt: `Cover of ${r.title}` } : null}
+          category={kind === "essay" ? "Essay" : "Serial"}
+          title={r.title}
+          description={r.excerpt}
+          linkLabel="Read"
+        />
+      ))}
+    </div>
+  );
+}
+
+export function PublishedContent({ kind }: { kind: "serial" | "essay" }) {
+  return authIsConfigured ? (
+    <QueryBoundary
+      fallback={(_e, retry) => (
+        <StatePanel
+          role="alert"
+          eyebrow="Something went wrong"
+          title="Published content is unavailable"
+          actions={<Button type="button" onClick={retry}>Try Again</Button>}
+        >
+          We couldn’t load the published {label(kind)}. This is usually temporary.
+        </StatePanel>
+      )}
+    >
+      <Feed kind={kind} />
+    </QueryBoundary>
+  ) : (
+    <StatePanel role="status" eyebrow="Not connected" title="Published content is not connected yet">
+      Reading will appear here once the site is connected to its content service.
+    </StatePanel>
+  );
+}
+
+function Counts() {
+  const data = useQuery(api.site.summary, {});
+  if (!data || (!data.books && !data.series)) return null;
+  return (
+    <p className="font-ui text-tiny font-semibold tracking-[0.18em] text-taupe uppercase">
+      {data.books} {data.books === 1 ? "book" : "books"} · {data.series} series · Explore the library
+    </p>
+  );
+}
+
+/** Live catalog totals; renders nothing until real numbers arrive (never a placeholder). */
+export function CatalogCounts() {
+  return authIsConfigured ? (
+    <QueryBoundary fallback={() => null}>
+      <Counts />
+    </QueryBoundary>
+  ) : null;
+}
+
+function Shelf() {
+  const data = useQuery(api.site.summary, {});
+  if (!data) {
+    return (
+      <div role="status" className={product1Grid}>
+        <span className="sr-only">Loading books…</span>
+        {Array.from({ length: 6 }, (_, n) => (
+          <div key={n} aria-hidden="true" className="aspect-[2/3] animate-pulse rounded-image bg-wine-card motion-reduce:animate-none" />
+        ))}
+      </div>
+    );
+  }
+  if (!data.featured.length) {
+    return (
+      <StatePanel role="status" eyebrow="Nothing published yet" title="The shelves are being stocked">
+        No books have been published to the library yet.
+      </StatePanel>
+    );
+  }
+  return (
+    <ul className={product1Grid}>
+      {data.featured.map((b) => (
+        <li key={b.id} className="min-w-0">
+          <Product1Item
+            url={`/read/${b.slug}`}
+            name={b.title}
+            description="View book"
+            image={
+              b.coverUrl ? (
+                <div className="relative aspect-[2/3] overflow-hidden rounded-image bg-wine-sunken shadow-[0_24px_40px_-24px_rgb(0_0_0/0.7)] ring-1 ring-hairline">
+                  <Image src={b.coverUrl} alt={`Cover of ${b.title}`} fill sizes="(max-width: 640px) 45vw, 180px" className="object-cover" />
+                </div>
+              ) : (
+                <div className="flex aspect-[2/3] items-end rounded-image bg-wine-raised p-3 ring-1 ring-hairline">
+                  <span className="font-display text-large leading-tight font-semibold text-cream">{b.title}</span>
+                </div>
+              )
+            }
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function PublishedShelf() {
+  return authIsConfigured ? (
+    <QueryBoundary
+      fallback={() => (
+        <StatePanel role="alert" eyebrow="Something went wrong" title="Books are temporarily unavailable">
+          The featured shelf couldn’t load. The full library is still available.
+        </StatePanel>
+      )}
+    >
+      <Shelf />
+    </QueryBoundary>
+  ) : (
+    <StatePanel role="status" eyebrow="Library unavailable" title="The catalog is not connected yet">
+      Books will appear here once the site is connected to its catalog service.
+    </StatePanel>
+  );
+}

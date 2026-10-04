@@ -15,7 +15,7 @@ export default function Page() {
       intro="These terms govern use of the Reader Hub, including its reading library, community, events, Writing Studio services, and paid memberships."
       sections={[
         {
-          title: "Accounts and acceptable use",
+          title: "Accounts and Acceptable Use",
           body: (
             <p>
               Keep account credentials private and provide accurate
@@ -26,7 +26,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Books and other content",
+          title: "Books and Other Content",
           body: (
             <p>
               Text, audio, artwork, branding, and downloads are protected by
@@ -37,7 +37,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Memberships and billing",
+          title: "Memberships and Billing",
           body: (
             <p>
               Paid memberships renew at the cadence shown at checkout until
@@ -48,7 +48,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Community and submissions",
+          title: "Community and Submissions",
           body: (
             <p>
               You retain ownership of what you post while granting the Reader
@@ -59,7 +59,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Events and professional services",
+          title: "Events and Professional Services",
           body: (
             <p>
               Event, course, and editorial-service details may include separate
@@ -70,7 +70,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Availability and changes",
+          title: "Availability and Changes",
           body: (
             <p>
               Features and content may change, pause, or end. The service is

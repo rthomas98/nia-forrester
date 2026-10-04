@@ -10,8 +10,10 @@ export default function ReadError({
   unstable_retry: () => void;
 }) {
   return (
-    <main className="mx-auto max-w-[1120px] px-5 pb-16 pt-10 sm:px-8 md:pb-24 md:pt-14 lg:px-10">
-      <CatalogQueryError error={error} onRetry={unstable_retry} />
+    <main className="px-[5%] py-16 md:py-24">
+      <div className="mx-auto w-full max-w-content">
+        <CatalogQueryError error={error} onRetry={unstable_retry} headingLevel="h1" />
+      </div>
     </main>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { BookCard } from "@/components/catalog/book-card";
 import { CatalogCover } from "@/components/catalog/catalog-cover";
@@ -26,7 +27,11 @@ import {
   inReadingOrder,
   type CatalogBook,
 } from "@/lib/catalog";
-import { focusRing, secondaryAction } from "@/lib/catalog-styles";
+import { secondaryAction } from "@/lib/catalog-styles";
+import { ProductHeader1 } from "@/components/relume/product-header1";
+import { Product1 } from "@/components/relume/product1";
+import { buttonVariants } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const RELATED_LIMIT = 6;
 
@@ -46,33 +51,27 @@ function BookFacts({ book }: { book: CatalogBook }) {
   if (facts.length === 0 && book.formats.length === 0) return null;
 
   return (
-    <dl className="mb-0 mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <dl className="mt-8 mb-0 grid grid-cols-1 gap-x-8 gap-y-5 border-y border-scheme-border py-6 sm:grid-cols-2">
       {facts.map(([label, value]) => (
-        <div
-          key={label}
-          className="rounded-2xl border border-[rgba(53,5,73,0.08)] bg-[var(--color-soft-lavender)]/55 p-4"
-        >
-          <dt className="font-sans text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-plum-muted)]">
+        <div key={label}>
+          <dt className="font-ui text-tiny font-semibold tracking-[0.16em] text-champagne uppercase">
             {label}
           </dt>
-          <dd className="m-0 mt-1.5 font-sans text-sm font-semibold text-[var(--color-deep-plum)]">
+          <dd className="m-0 mt-1.5 text-cream">
             {value}
           </dd>
         </div>
       ))}
       {book.formats.length > 0 ? (
-        <div className="rounded-2xl border border-[rgba(53,5,73,0.08)] bg-[var(--color-soft-lavender)]/55 p-4 sm:col-span-2">
-          <dt className="font-sans text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--color-plum-muted)]">
-            Available formats
+        <div className="sm:col-span-2">
+          <dt className="font-ui text-tiny font-semibold tracking-[0.16em] text-champagne uppercase">
+            Available Formats
           </dt>
           <dd className="m-0 mt-2.5">
             <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
               {book.formats.map((format) => (
-                <li
-                  key={format}
-                  className="rounded-full bg-[var(--color-deep-plum)] px-3 py-1.5 font-sans text-xs font-semibold text-[var(--color-brand-surface)]"
-                >
-                  {formatLabel(format)}
+                <li key={format}>
+                  <Badge variant="outline">{formatLabel(format)}</Badge>
                 </li>
               ))}
             </ul>
@@ -87,46 +86,47 @@ function BookHero({ book }: { book: CatalogBook }) {
   const description = bookDescription(book);
 
   return (
-    <section className="grid grid-cols-1 overflow-hidden rounded-[28px] bg-[var(--color-brand-surface)] shadow-[0_12px_28px_rgba(53,5,73,0.08),0_2px_6px_rgba(53,5,73,0.04)] md:grid-cols-[minmax(240px,0.7fr)_minmax(0,1.3fr)] lg:rounded-[36px]">
-      <div className="flex items-center justify-center px-10 pb-2 pt-10 sm:px-14 md:p-10 lg:p-14">
-        <div className="w-full max-w-[200px] sm:max-w-[240px] md:max-w-[268px]">
-          <CatalogCover
-            book={book}
-            variant="detail"
-            eager
-            sizes="(min-width: 768px) 268px, (min-width: 640px) 240px, 200px"
-          />
-        </div>
+    <ProductHeader1
+      breadcrumbs={[
+        { url: "/read", title: "Read" },
+        { url: "/read#backlist", title: book.series ? book.series.title : "Standalones" },
+        { title: book.title },
+      ]}
+      media={
+        <CatalogCover
+          book={book}
+          variant="detail"
+          eager
+          sizes="(min-width: 1024px) 400px, 288px"
+        />
+      }
+    >
+      <p className="mb-3 font-ui text-tiny font-semibold tracking-[0.22em] text-champagne uppercase md:mb-4">
+        {book.series ? book.series.title : "Standalone"}
+      </p>
+      <h1 className="mb-0 font-display text-h2 font-semibold text-balance break-words text-cream">
+        {book.title}
+      </h1>
+      {book.subtitle ? (
+        <p className="mt-3 mb-0 font-display text-h6 leading-snug text-pretty text-body">
+          {book.subtitle}
+        </p>
+      ) : null}
+      {description ? (
+        <p className="mt-6 mb-0 max-w-[60ch] text-medium text-pretty whitespace-pre-line text-body">
+          {description}
+        </p>
+      ) : null}
+
+      <BookFacts book={book} />
+
+      <div className="mt-8 flex flex-wrap items-start gap-4">
+        <PurchaseLink book={book} />
+        <Link href="/read#backlist" className={secondaryAction}>
+          Browse the Backlist
+        </Link>
       </div>
-
-      <div className="flex min-w-0 flex-col justify-center px-6 py-9 sm:px-10 md:py-12 lg:px-14 lg:py-16">
-        <div className="font-sans text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--color-hot-magenta)]">
-          {book.series ? book.series.title : "Standalone"}
-        </div>
-        <h1 className="mb-0 mt-3 text-balance break-words font-sans text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.02] tracking-[-0.035em] text-[var(--color-deep-plum)]">
-          {book.title}
-        </h1>
-        {book.subtitle ? (
-          <p className="mb-0 mt-3 text-pretty font-serif text-xl italic leading-[1.35] text-[var(--color-plum-copy)]">
-            {book.subtitle}
-          </p>
-        ) : null}
-        {description ? (
-          <p className="mb-0 mt-5 max-w-[58ch] whitespace-pre-line text-pretty text-[17px] leading-[1.7] text-[var(--color-plum-copy)]">
-            {description}
-          </p>
-        ) : null}
-
-        <BookFacts book={book} />
-
-        <div className="mt-8 flex flex-wrap items-start gap-3">
-          <PurchaseLink book={book} />
-          <Link href="/read#backlist" className={secondaryAction}>
-            Browse the backlist
-          </Link>
-        </div>
-      </div>
-    </section>
+    </ProductHeader1>
   );
 }
 
@@ -150,29 +150,23 @@ function RelatedBooks({ book }: { book: CatalogBook }) {
   if (related.length === 0) return null;
 
   return (
-    <section aria-labelledby="related-heading">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="font-sans text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--color-hot-magenta)]">
-            Keep exploring
-          </div>
-          <h2
-            id="related-heading"
-            className="mb-0 mt-2 text-balance font-sans text-[26px] font-bold tracking-[-0.025em] text-[var(--color-deep-plum)] sm:text-3xl"
-          >
-            {inSeries.length > 0 && book.series
-              ? `More in ${book.series.title}`
-              : "More from the library"}
-          </h2>
-        </div>
-        <Link
-          href="/read"
-          className={`inline-flex min-h-11 items-center rounded-full font-sans text-sm font-semibold text-[var(--color-plum-copy)] hover:text-[var(--color-hot-magenta)] ${focusRing}`}
-        >
-          View all
+    <Product1
+      bare
+      tagline="Keep Exploring"
+      heading={
+        inSeries.length > 0 && book.series
+          ? `More in ${book.series.title}`
+          : "More From the Library"
+      }
+      headingId="related-heading"
+      headingLevel="h2"
+      viewAll={
+        <Link href="/read" className={buttonVariants({ variant: "secondary" })}>
+          View All
         </Link>
-      </div>
-      <ul className="-mx-2 my-0 flex list-none snap-x snap-proximity gap-5 overflow-x-auto overscroll-x-contain px-2 pb-4 pt-2">
+      }
+    >
+      <ul className="-mx-2 my-0 flex list-none snap-x snap-proximity gap-6 overflow-x-auto overscroll-x-contain px-2 pt-2 pb-4">
         {related.map((candidate) => (
           <li
             key={candidate._id}
@@ -185,7 +179,7 @@ function RelatedBooks({ book }: { book: CatalogBook }) {
           </li>
         ))}
       </ul>
-    </section>
+    </Product1>
   );
 }
 
@@ -203,23 +197,39 @@ function BookDetail({
   const book = live.status === "ready" ? live.data : initialBook;
 
   if (book === null) {
-    if (live.status === "loading") return <BookDetailSkeleton />;
-    if (live.status === "offline") return <CatalogOffline />;
-    return <BookNotFound />;
+    if (live.status === "loading") return <Padded><h1 className="sr-only">Loading Book</h1><BookDetailSkeleton /></Padded>;
+    if (live.status === "offline") return <Padded><CatalogOffline headingLevel="h1" /></Padded>;
+    return <Padded><BookNotFound headingLevel="h1" /></Padded>;
   }
 
   return (
-    <div className="flex flex-col gap-10 lg:gap-14">
+    <>
       <BookHero book={book} />
-      <SaveBook slug={book.slug} />
-      <ReadingProgressPanel slug={book.slug} />
-      <QueryBoundary
-        fallback={(error, retry) => (
-          <CatalogQueryError error={error} onRetry={retry} />
-        )}
-      >
-        <RelatedBooks book={book} />
-      </QueryBoundary>
+      <section aria-label="Your copy" className="border-t border-hairline px-[5%] py-12 md:py-16">
+        <div className="mx-auto grid w-full max-w-content grid-cols-1 items-start gap-6 lg:grid-cols-2 lg:gap-8">
+          <SaveBook slug={book.slug} />
+          <ReadingProgressPanel slug={book.slug} />
+        </div>
+      </section>
+      <div className="border-t border-hairline px-[5%] py-16 md:py-24">
+        <div className="mx-auto w-full max-w-content">
+          <QueryBoundary
+            fallback={(error, retry) => (
+              <CatalogQueryError error={error} onRetry={retry} />
+            )}
+          >
+            <RelatedBooks book={book} />
+          </QueryBoundary>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function Padded({ children }: { children: ReactNode }) {
+  return (
+    <div className="px-[5%] pt-8 pb-16 md:pb-24">
+      <div className="mx-auto w-full max-w-content">{children}</div>
     </div>
   );
 }
@@ -232,24 +242,21 @@ export default function BookDetailPage({
   initialBook: CatalogBook | null;
 }) {
   return (
-    <main className="mx-auto max-w-[1120px] px-5 pb-16 pt-7 sm:px-8 md:pb-24 md:pt-10 lg:px-10">
-      <Link
-        href="/read"
-        className={`mb-6 inline-flex min-h-11 items-center gap-2 rounded-full font-sans text-sm font-semibold text-[var(--color-plum-copy)] transition-colors hover:text-[var(--color-hot-magenta)] ${focusRing}`}
-      >
-        <span aria-hidden="true">←</span> Back to Read
-      </Link>
-
+    <main>
       {catalogIsConfigured ? (
         <QueryBoundary
           fallback={(error, retry) => (
-            <CatalogQueryError error={error} onRetry={retry} />
+            <Padded>
+              <CatalogQueryError error={error} onRetry={retry} headingLevel="h1" />
+            </Padded>
           )}
         >
           <BookDetail slug={slug} initialBook={initialBook} />
         </QueryBoundary>
       ) : (
-        <CatalogUnconfigured />
+        <Padded>
+          <CatalogUnconfigured headingLevel="h1" />
+        </Padded>
       )}
     </main>
   );

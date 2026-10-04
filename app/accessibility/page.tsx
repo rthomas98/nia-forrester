@@ -15,7 +15,7 @@ export default function Page() {
       intro="The Reader Hub is being built so readers can navigate, understand, and use it across devices and with assistive technology."
       sections={[
         {
-          title: "What we support",
+          title: "What We Support",
           body: (
             <p>
               The site targets keyboard navigation, visible focus, semantic
@@ -26,7 +26,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Ongoing work",
+          title: "Ongoing Work",
           body: (
             <p>
               Accessibility is reviewed as new reading, audio, community,
@@ -37,7 +37,7 @@ export default function Page() {
           ),
         },
         {
-          title: "Tell us what is not working",
+          title: "Tell Us What Is Not Working",
           body: (
             <p>
               Use the contact form with the page, device, browser, and

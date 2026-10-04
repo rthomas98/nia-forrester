@@ -1,8 +1,29 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { Check, Mail } from "relume-icons";
 import { authClient } from "@/lib/auth-client";
 import { useAuth } from "@/components/auth-context";
+import { Login7 } from "@/components/relume/login7";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { alertText, muted, textLink } from "@/lib/typography";
+
+const steps = {
+    1: { tagline: "Reset Password", title: "Forgot Your Password?" },
+    2: { tagline: "Reset Password", title: "Check Your Email" },
+    3: { tagline: "Almost There", title: "Choose a New Password" },
+    4: { tagline: "All Set", title: "Password Updated" },
+} as const;
+
+function ResetError({ message }: { message: string }) {
+    return (<p role="alert" className={alertText}>
+        {message}
+      </p>);
+}
+
 export default function ResetPage({ token, tokenError, }: {
     token?: string;
     tokenError?: string;
@@ -39,6 +60,29 @@ export default function ResetPage({ token, tokenError, }: {
                 return;
             }
             setResetStep(2);
+        }
+        catch {
+            setResetError("We couldn’t reach the account service.");
+        }
+        finally {
+            setPending(false);
+        }
+    };
+    const resetResend = async () => {
+        // Clear the previous attempt's outcome so a stale failure never sits beside "Sent again".
+        setResetError("");
+        setResetResent(false);
+        setPending(true);
+        try {
+            const result = await authClient.requestPasswordReset({
+                email: resetEmail,
+                redirectTo: `${window.location.origin}/reset`,
+            });
+            if (result.error) {
+                setResetError(result.error.message ?? "We couldn’t resend the link.");
+                return;
+            }
+            setResetResent(true);
         }
         catch {
             setResetError("We couldn’t reach the account service.");
@@ -92,178 +136,106 @@ export default function ResetPage({ token, tokenError, }: {
     if (/[0-9]/.test(pwVal) || /[^A-Za-z0-9]/.test(pwVal))
         pwScore++;
     const pw = pwVal.length === 0
-        ? { width: "w-0", color: "bg-[var(--color-plum-faint)]", text: "text-[var(--color-plum-faint)]", label: " " }
+        ? { width: "w-0", color: "bg-taupe", text: "text-taupe", label: " " }
         : pwScore <= 1
-            ? { width: "w-1/4", color: "bg-[var(--color-hot-magenta)]", text: "text-[var(--color-hot-magenta)]", label: "Weak" }
+            ? { width: "w-1/4", color: "bg-rose", text: "text-rose", label: "Weak" }
             : pwScore === 2
-                ? { width: "w-[55%]", color: "bg-[var(--color-cool-teal)]", text: "text-[var(--color-cool-teal)]", label: "Okay" }
+                ? { width: "w-[55%]", color: "bg-champagne/70", text: "text-champagne", label: "Okay" }
                 : pwScore === 3
-                    ? { width: "w-4/5", color: "bg-[var(--color-cool-teal)]", text: "text-[var(--color-cool-teal)]", label: "Good" }
-                    : { width: "w-full", color: "bg-[var(--color-deep-plum)]", text: "text-[var(--color-deep-plum)]", label: "Strong" };
-    return (<main className="max-[900px]:px-8 max-[900px]:py-12 max-[640px]:px-5 max-[640px]:py-9 [max-width:520px] [margin:0_auto] [padding:64px_40px_96px]">
-      {resetStep === 1 && (<>
-          <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:14px]">
-            Reset password
-          </div>
-          <h1 className="font-sans [font-weight:700] [font-size:36px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_8px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-            Forgot your password?
-          </h1>
-          <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_28px] text-pretty">
-            No drama. Tell us your email and we&apos;ll send a reset link.
-          </p>
-          <form onSubmit={resetSend} noValidate className="flex flex-col [gap:14px]">
-            <label className="flex flex-col [gap:7px]">
-              <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                Email
-              </span>
-              <input type="email" name="email" autoComplete="email" value={resetEmail} onChange={(e) => {
+                    ? { width: "w-4/5", color: "bg-champagne", text: "text-champagne", label: "Good" }
+                    : { width: "w-full", color: "bg-cream", text: "text-cream", label: "Strong" };
+    const step = steps[resetStep as 1 | 2 | 3 | 4];
+    return (<main>
+      <Login7
+        tagline={step.tagline}
+        title={step.title}
+        description={resetStep === 1 ? <p>No drama. Tell us your email and we&apos;ll send a reset link.</p>
+            : resetStep === 2 ? <>
+                <p>If an account exists for this email address, a reset link will be sent.</p>
+                <p className="mt-2 text-small text-taupe">Address entered: <strong className="font-semibold text-cream">{resetEmail}</strong></p>
+              </>
+                : resetStep === 3 ? (resetEmail ? <p>For <strong className="font-semibold text-cream">{resetEmail}</strong></p> : <p>Choose a password you haven’t used here before.</p>)
+                    : <p>You&apos;re all set. Sign in with your new password and pick up your reading where you left off.</p>}
+        image={<Image src="/images/nia-closeup-pensive.jpeg" alt="Close-up portrait of Nia Forrester" fill sizes="50vw" className="object-cover object-center"/>}
+        footer={resetStep === 1 ? <>
+            <p>Remembered it?</p>
+            <Link href="/signin" className={textLink}>Back to Sign In</Link>
+          </> : undefined}
+      >
+        {resetStep === 1 && (<form onSubmit={resetSend} noValidate className="grid grid-cols-1 gap-6">
+            <div className="grid w-full items-center">
+              <Label htmlFor="reset-email" className="mb-2">Email</Label>
+              <Input id="reset-email" type="email" name="email" autoComplete="email" value={resetEmail} aria-invalid={resetError ? true : undefined} onChange={(e) => {
                 setResetEmail(e.target.value);
                 setResetError("");
-            }} placeholder="you@example.com" className={`rounded-[14px] border bg-[var(--color-brand-surface)] px-4 py-[13px] font-sans text-[15px] text-[var(--color-deep-plum)] ${resetError && resetStep === 1 ? "border-[var(--color-hot-magenta)]" : "border-[rgba(53,5,73,0.16)]"}`}/>
-            </label>
-            {resetError && (<div className="flex items-center [gap:8px] [font-size:13px] [color:var(--color-hot-magenta)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 8v4"></path>
-                  <path d="M12 16h.01"></path>
-                </svg>
-                {resetError}
-              </div>)}
-            <button type="submit" disabled={pending} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [margin-top:6px] [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-              {pending ? "Sending…" : "Send reset link"}
-            </button>
-          </form>
-          <p className="[font-size:14px] [color:var(--color-plum-copy)] [margin:22px_0_0] text-center text-pretty">
-            Remembered it?{" "}
-            <Link href="/signin" className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:14px] [color:var(--color-hot-magenta)] [padding:0px]">
-              Back to sign in
-            </Link>
-          </p>
-        </>)}
+            }} placeholder="you@example.com"/>
+            </div>
+            {resetError && <ResetError message={resetError}/>}
+            <Button type="submit" disabled={pending}>
+              {pending ? "Sending…" : "Send Reset Link"}
+            </Button>
+          </form>)}
 
-      {resetStep === 2 && (<>
-          <div className="[width:64px] [height:64px] [border-radius:999px] [background:var(--color-cool-teal)] [color:var(--color-deep-plum)] flex items-center justify-center [margin-bottom:24px]">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-            </svg>
-          </div>
-          <h1 className="font-sans [font-weight:700] [font-size:36px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_8px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-            Check your email
-          </h1>
-          <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_6px] text-pretty">
-            We sent a reset link to{" "}
-            <strong className="font-sans [font-weight:600] [color:var(--color-deep-plum)]">
-              {resetEmail}
-            </strong>
-            .
-          </p>
-          <p className="[font-size:14px] [line-height:1.6] [color:var(--color-plum-muted)] [margin:0_0_28px] text-pretty">
-            The link expires in 30 minutes. Check spam if it&apos;s shy.
-          </p>
-          <div className="flex items-center [gap:6px] [margin-top:22px]">
-            <span className="[font-size:14px] [color:var(--color-plum-copy)]">
-              Nothing arrived?
-            </span>
-            <button type="button" onClick={async () => {
-                setPending(true);
-                try {
-                    const result = await authClient.requestPasswordReset({
-                        email: resetEmail,
-                        redirectTo: `${window.location.origin}/reset`,
-                    });
-                    if (result.error) {
-                        setResetError(result.error.message ?? "We couldn’t resend the link.");
-                        return;
-                    }
-                    setResetResent(true);
-                }
-                catch {
-                    setResetError("We couldn’t reach the account service.");
-                }
-                finally {
-                    setPending(false);
-                }
-            }} disabled={pending} className="transition-colors duration-150 hover:text-[var(--color-hot-magenta)] font-sans [font-weight:600] [font-size:14px] [color:var(--color-hot-magenta)] [padding:0px]">
-              {resetResent ? "Sent again ✓" : "Resend the link"}
-            </button>
-          </div>
-        </>)}
+        {resetStep === 2 && (<div className="text-center">
+            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full border border-champagne/50 text-champagne">
+              <Mail aria-hidden="true" className="size-7"/>
+            </div>
+            <p className={`mb-6 ${muted}`}>
+              {/* Matches convex/auth.ts resetPasswordTokenExpiresIn (60 * 60) and the reset email copy. */}
+              Reset links expire in one hour. Check spam if it&apos;s shy.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-2">
+              <span className="text-body">Nothing arrived?</span>
+              <Button type="button" variant="link" size="link" onClick={resetResend} disabled={pending}>
+                {resetResent ? "Sent again ✓" : "Resend the link"}
+              </Button>
+            </div>
+            {resetError && <div className="mt-3"><ResetError message={resetError}/></div>}
+          </div>)}
 
-      {resetStep === 3 && (<>
-          {tokenError && (<p role="alert" className="[color:var(--color-hot-magenta)] [font-size:14px] text-pretty">
-              This password reset link is invalid or has expired. Request a new
-              one below.
-            </p>)}
-          <div className="font-sans [font-weight:700] [font-size:11px] [letter-spacing:0.18em] uppercase [color:var(--color-hot-magenta)] [margin-bottom:14px]">
-            Almost there
-          </div>
-          <h1 className="font-sans [font-weight:700] [font-size:36px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_8px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-            Choose a new password
-          </h1>
-          <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_28px] text-pretty">
-            For{" "}
-            <strong className="font-sans [font-weight:600] [color:var(--color-deep-plum)]">
-              {resetEmail}
-            </strong>
-          </p>
-          <form onSubmit={resetSave} className="flex flex-col [gap:14px]">
-            <label className="flex flex-col [gap:7px]">
-              <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                New password
-              </span>
-              <input type="password" name="new-password" autoComplete="new-password" value={resetPw1} onChange={(e) => {
+        {resetStep === 3 && (<>
+            {tokenError && (<p role="alert" className={`mb-6 ${alertText}`}>
+                This password reset link is invalid or has expired. Request a new
+                one below.
+              </p>)}
+            <form onSubmit={resetSave} className="grid grid-cols-1 gap-6">
+              <div className="grid w-full items-center">
+                <Label htmlFor="reset-new-password" className="mb-2">New Password</Label>
+                <Input id="reset-new-password" type="password" name="new-password" autoComplete="new-password" value={resetPw1} onChange={(e) => {
                 setResetPw1(e.target.value);
                 setResetError("");
-            }} placeholder="At least 8 characters" className="[border:1px_solid_rgba(53,5,73,0.16)] [background:var(--color-brand-surface)] [border-radius:14px] [padding:13px_16px] font-sans [font-size:15px] [color:var(--color-deep-plum)]"/>
-            </label>
-            <div className="flex items-center [gap:10px]">
-              <div className="[flex:1] [height:4px] [border-radius:999px] [background:rgba(53,5,73,0.08)] overflow-hidden">
-                <div className={`h-full rounded-full transition-all duration-200 ${pw.width} ${pw.color}`}></div>
+            }} placeholder="At least 8 characters"/>
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-wine-sunken">
+                    <div className={`h-full rounded-full transition-all duration-200 motion-reduce:transition-none ${pw.width} ${pw.color}`}></div>
+                  </div>
+                  <span className={`font-ui text-tiny font-semibold whitespace-nowrap ${pw.text}`}>
+                    {pw.label}
+                  </span>
+                </div>
               </div>
-              <span className={`whitespace-nowrap font-sans text-xs font-semibold ${pw.text}`}>
-                {pw.label}
-              </span>
-            </div>
-            <label className="flex flex-col [gap:7px]">
-              <span className="font-sans [font-weight:600] [font-size:13px] [color:var(--color-deep-plum)]">
-                Repeat it
-              </span>
-              <input type="password" name="confirm-password" autoComplete="new-password" value={resetPw2} onChange={(e) => {
+              <div className="grid w-full items-center">
+                <Label htmlFor="reset-confirm-password" className="mb-2">Repeat It</Label>
+                <Input id="reset-confirm-password" type="password" name="confirm-password" autoComplete="new-password" value={resetPw2} onChange={(e) => {
                 setResetPw2(e.target.value);
                 setResetError("");
-            }} placeholder="Same again" className="[border:1px_solid_rgba(53,5,73,0.16)] [background:var(--color-brand-surface)] [border-radius:14px] [padding:13px_16px] font-sans [font-size:15px] [color:var(--color-deep-plum)]"/>
-            </label>
-            {resetError && (<div className="flex items-center [gap:8px] [font-size:13px] [color:var(--color-hot-magenta)]">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <path d="M12 8v4"></path>
-                  <path d="M12 16h.01"></path>
-                </svg>
-                {resetError}
-              </div>)}
-            <button type="submit" disabled={pending} className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 [margin-top:6px] [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-              {pending ? "Saving…" : "Save new password"}
-            </button>
-          </form>
-        </>)}
+            }} placeholder="Same again"/>
+              </div>
+              {resetError && <ResetError message={resetError}/>}
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : "Save New Password"}
+              </Button>
+            </form>
+          </>)}
 
-      {resetStep === 4 && (<>
-          <div className="[width:64px] [height:64px] [border-radius:999px] [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] flex items-center justify-center [margin-bottom:24px]">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6 9 17l-5-5"></path>
-            </svg>
-          </div>
-          <h1 className="font-sans [font-weight:700] [font-size:36px] [letter-spacing:-0.025em] [color:var(--color-deep-plum)] [margin:0_0_8px] text-balance max-sm:text-[clamp(2.25rem,12vw,3.25rem)]">
-            Password updated
-          </h1>
-          <p className="[font-size:15px] [line-height:1.6] [color:var(--color-plum-copy)] [margin:0_0_28px] text-pretty">
-            You&apos;re all set. Sign in with your new password and get back to
-            Chapter 11.
-          </p>
-          <Link href="/signin" className="transition duration-200 ease-out hover:-translate-y-0.5 hover:bg-[var(--color-deep-plum)] hover:shadow-xl active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 inline-block [background:var(--color-hot-magenta)] [color:var(--color-brand-surface)] [padding:15px_26px] [border-radius:999px] font-sans [font-weight:600] [font-size:15px]">
-            Back to sign in
-          </Link>
-        </>)}
+        {resetStep === 4 && (<div className="text-center">
+            <div className="mx-auto mb-6 flex size-16 items-center justify-center rounded-full bg-champagne text-wine-sunken">
+              <Check aria-hidden="true" className="size-7"/>
+            </div>
+            <Link href="/signin" className={buttonVariants()}>
+              Back to Sign In
+            </Link>
+          </div>)}
+      </Login7>
     </main>);
 }

@@ -24,7 +24,7 @@ export const listPublished = query({
   args: { kind: v.optional(kind), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const rows = await ctx.db.query("content").withIndex("by_status_published", q => q.eq("status", "published")).order("desc").collect();
-    return rows.filter(r => r.visibility !== "hidden" && (!args.kind || r.kind === args.kind)).slice(0, Math.max(1,Math.min(args.limit ?? 100,100))).map(r => ({_id:r._id,slug:r.slug,title:r.title,kind:r.kind,excerpt:r.excerpt,accessTier:r.accessTier,publishedAt:r.publishedAt}));
+    return rows.filter(r => r.visibility !== "hidden" && (!args.kind || r.kind === args.kind)).slice(0, Math.max(1,Math.min(args.limit ?? 100,100))).map(r => ({_id:r._id,slug:r.slug,title:r.title,kind:r.kind,excerpt:r.excerpt,coverUrl:r.coverUrl,accessTier:r.accessTier,publishedAt:r.publishedAt}));
   },
 });
 

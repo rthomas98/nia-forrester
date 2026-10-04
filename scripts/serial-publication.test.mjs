@@ -1,0 +1,24 @@
+import { readFileSync } from "node:fs";
+import { it, expect } from "vitest";
+import { convexTest } from "convex-test";
+import betterAuth from "@convex-dev/better-auth/test";
+import schema from "../convex/schema";
+import { api, internal } from "../convex/_generated/api";
+const modules = import.meta.glob("../convex/**/*.ts");
+it("publishes the exact author chapter anonymously and idempotently without changing book counts", async () => {
+  const t = convexTest(schema, modules); betterAuth.register(t);
+  const raw = readFileSync(new URL("../data/serials/the-best-bad-idea-chapter-1.txt", import.meta.url), "utf8");
+  const body = raw.slice(raw.indexOf("The party was")).trim();
+  const first = await t.mutation(internal.serialBootstrap.bestBadIdea, { body });
+  expect(await t.mutation(internal.serialBootstrap.bestBadIdea, { body })).toEqual(first);
+  const feed = await t.query(api.content.listPublished, { kind: "serial" });
+  expect(feed).toHaveLength(1);
+  expect(feed[0].coverUrl).toBe("/images/the-best-bad-idea.png");
+  const item = await t.query(api.content.bySlug, { slug: "the-best-bad-idea" });
+  expect(item.hasAccess).toBe(true);
+  const chapters = await t.query(api.content.chaptersForContent, { contentId: item._id });
+  expect(chapters).toHaveLength(1);
+  expect(chapters[0].hasAccess).toBe(true);
+  expect(chapters[0].body).toBe(body);
+  expect((await t.query(api.site.summary, {})).books).toBe(0);
+});

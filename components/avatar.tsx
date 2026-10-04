@@ -5,7 +5,8 @@ import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { QueryBoundary } from "@/components/catalog/query-boundary";
 import { authIsConfigured } from "@/lib/auth-client";
-const button = "min-h-11 rounded-full border border-current px-4 py-2 text-sm font-semibold disabled:opacity-50";
+import { Button } from "@/components/ui/button";
+import { muted, statusText } from "@/lib/typography";
 function Initial({ name }: { name: string }) { return <span aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>; }
 function Picture({ name }: { name: string }) {
   const { isAuthenticated } = useConvexAuth();
@@ -41,8 +42,8 @@ function UploadControl({ name }: { name: string }) {
     catch { setMessage("Could not remove your avatar. Try again."); }
     finally { setBusy(false); }
   }
-  return <div className="mb-5 space-y-3"><div className="flex size-20 items-center justify-center overflow-hidden rounded-full bg-[var(--color-cool-teal)] text-2xl font-bold text-[var(--color-deep-plum)]"><UserAvatar name={name} /></div><label className="block text-sm font-semibold" htmlFor="avatar-upload">Upload Avatar</label><input id="avatar-upload" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || !isAuthenticated} onChange={event => void upload(event)} className="block w-full min-w-0 text-xs file:mr-2 file:rounded-full file:border-0 file:px-3 file:py-3 file:font-semibold" /><p className="text-xs">JPEG, PNG, or WebP · up to 5 MB. Center-cropped to a square. Profile images are visible to anyone with the image link.</p>{url && <button type="button" className={button} disabled={busy} onClick={() => void clear()}>Remove Avatar</button>}<p role="status" className="text-sm">{busy ? "Updating avatar…" : message}</p></div>;
+  return <div className="mb-6 space-y-3"><div className="flex size-20 items-center justify-center overflow-hidden rounded-full bg-cabernet font-display text-h4 font-semibold text-cream ring-1 ring-champagne/40"><UserAvatar name={name} /></div><label className="block font-ui text-small font-semibold text-cream" htmlFor="avatar-upload">Upload Avatar</label><input id="avatar-upload" type="file" accept="image/jpeg,image/png,image/webp" disabled={busy || !isAuthenticated} onChange={event => void upload(event)} className="block w-full min-w-0 cursor-pointer text-tiny text-body file:mr-3 file:min-h-11 file:cursor-pointer file:rounded-button file:border file:border-scheme-border file:bg-transparent file:px-4 file:font-ui file:text-tiny file:font-semibold file:tracking-[0.12em] file:text-cream file:uppercase hover:file:border-champagne focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-champagne" /><p className={muted}>JPEG, PNG, or WebP · up to 5 MB. Center-cropped to a square. Profile images are visible to anyone with the image link.</p>{url && <Button type="button" variant="secondary" size="sm" disabled={busy} onClick={() => void clear()}>Remove Avatar</Button>}<p role="status" className={statusText}>{busy ? "Updating avatar…" : message}</p></div>;
 }
 export function AvatarUpload({ name }: { name: string }) {
-  return <QueryBoundary fallback={(_error, retry) => <div role="alert">Avatar unavailable. <button className={button} onClick={retry}>Try Again</button></div>}><UploadControl name={name} /></QueryBoundary>;
+  return <QueryBoundary fallback={(_error, retry) => <div role="alert" className="mb-6 space-y-3"><p className={statusText}>Avatar unavailable.</p><Button type="button" variant="secondary" size="sm" onClick={retry}>Try Again</Button></div>}><UploadControl name={name} /></QueryBoundary>;
 }

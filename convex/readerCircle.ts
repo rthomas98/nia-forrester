@@ -6,6 +6,8 @@ import {
   isPaidSubscription,
   paidSubscription,
   requirePaidMember,
+  canAccessClub,
+  requireClubAccess,
 } from "./communityAccess";
 
 async function author(ctx: QueryCtx, id: string) {
@@ -71,14 +73,19 @@ export const join = mutation({
 export const discussions = query({
   args: {},
   handler: async (ctx) => {
-    await requirePaidMember(ctx);
-    const rows = await ctx.db
+    const { user, subscription } = await requirePaidMember(ctx);
+    const rows = ctx.db
       .query("threads")
       .withIndex("by_status_activity", (q) => q.eq("status", "open"))
-      .order("desc")
-      .take(50);
+      .order("desc");
+    const visible = [];
+    for await (const row of rows) {
+      if (row.clubId && !await canAccessClub(ctx, user._id, subscription, row.clubId)) continue;
+      visible.push(row);
+      if (visible.length === 50) break;
+    }
     return Promise.all(
-      rows.map(async (row) => ({
+      visible.map(async (row) => ({
         _id: row._id,
         title: row.title,
         author: await author(ctx, row.authorAuthUserId),
@@ -96,9 +103,10 @@ export const discussions = query({
 export const discussion = query({
   args: { threadId: v.id("threads") },
   handler: async (ctx, { threadId }) => {
-    await requirePaidMember(ctx);
+    const { user, subscription } = await requirePaidMember(ctx);
     const row = await ctx.db.get(threadId);
     if (!row || row.status === "hidden") return null;
+    if (row.clubId) await requireClubAccess(ctx, user._id, subscription, row.clubId);
     const posts = await ctx.db
       .query("posts")
       .withIndex("by_thread_created", (q) => q.eq("threadId", threadId))

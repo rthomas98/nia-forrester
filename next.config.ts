@@ -3,6 +3,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   poweredByHeader: false,
+  // Sharp loads libvips dynamically; preserve the matching native libraries
+  // in the avatar function's Linux deployment bundle.
+  outputFileTracingIncludes: {
+    "/api/avatar": ["./node_modules/@img/sharp-linux-x64/**/*", "./node_modules/@img/sharp-libvips-linux-x64/**/*"],
+  },
   async redirects() {
     return [{
       source: "/read/ivys-league-b015n7gnx2",
