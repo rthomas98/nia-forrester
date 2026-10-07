@@ -3,7 +3,7 @@ import MembershipPage from "@/components/pages/membership-page";
 import PrelaunchPage from "@/components/pages/prelaunch-page";
 
 export const metadata: Metadata = {
-  title: "Join the Circle",
+  title: "Connect",
   description:
     "Choose the Nia Forrester Reader Hub membership that fits how you read, gather, or write.",
   alternates: { canonical: "/membership" },

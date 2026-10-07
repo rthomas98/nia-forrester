@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import AcademyPage from "@/components/pages/academy-page";
 
 export const metadata: Metadata = {
-  title: "The Writing Studio",
+  title: "Academy",
   description:
-    "Book manuscript feedback, consultations, developmental editing, courses, workshops, and masterclasses with Nia Forrester.",
+    "Work with Nia Forrester through developmental editing, one-on-one coaching, courses, and workshops that sharpen your craft and strengthen your novel.",
   alternates: { canonical: "/academy" },
 };
 

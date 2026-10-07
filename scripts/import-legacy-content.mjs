@@ -1,78 +1,17 @@
 #!/usr/bin/env node
-
-import { createHash } from "node:crypto";
-import { ConvexHttpClient } from "convex/browser";
-import { api } from "../convex/_generated/api.js";
-
-const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-const authToken = process.env.CONVEX_AUTH_TOKEN;
-const sitemapUrl =
-  process.env.LEGACY_SITEMAP_URL ??
-  "https://www.niaforrester.com/sitemap.xml";
-
-if (!convexUrl || !authToken) {
-  console.error(
-    "Set NEXT_PUBLIC_CONVEX_URL and CONVEX_AUTH_TOKEN for an editor/admin before staging legacy content.",
-  );
-  process.exit(1);
-}
-
-const sitemapResponse = await fetch(sitemapUrl);
-if (!sitemapResponse.ok) {
-  throw new Error(`Could not fetch ${sitemapUrl}: ${sitemapResponse.status}`);
-}
-const sitemap = await sitemapResponse.text();
-const urls = Array.from(sitemap.matchAll(/<loc>(.*?)<\/loc>/g), (match) =>
-  match[1].replaceAll("&amp;", "&"),
-);
-
-const client = new ConvexHttpClient(convexUrl);
-client.setAuth(authToken);
-let jobId;
-let staged = 0;
-let skipped = 0;
-
-for (let start = 0; start < urls.length; start += 20) {
-  const batchUrls = urls.slice(start, start + 20);
-  const records = await Promise.all(
-    batchUrls.map(async (url) => {
-      const response = await fetch(url);
-      const html = response.ok ? await response.text() : "";
-      const title =
-        html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)/i)?.[1] ??
-        html.match(/<title>(.*?)<\/title>/i)?.[1] ??
-        url;
-      const description =
-        html.match(/<meta[^>]+(?:name|property)=["'](?:description|og:description)["'][^>]+content=["']([^"']+)/i)?.[1] ??
-        "";
-      const payload = JSON.stringify({
-        title,
-        description,
-        httpStatus: response.status,
-        fetchedAt: new Date().toISOString(),
-      });
-      return {
-        externalId: createHash("sha256").update(url).digest("hex"),
-        externalUrl: url,
-        entityType: url.includes("/post/") ? "essay" : "page",
-        payload,
-        checksum: createHash("sha256").update(payload).digest("hex"),
-      };
-    }),
-  );
-
-  const result = await client.mutation(api.imports.stageBatch, {
-    source: "wix",
-    jobId,
-    sourceUrl: sitemapUrl,
-    records,
-  });
-  jobId = result.jobId;
-  staged += result.staged;
-  skipped += result.skipped;
-  console.log(`Staged ${Math.min(start + 20, urls.length)} of ${urls.length}`);
-}
-
-console.log(
-  JSON.stringify({ jobId, discovered: urls.length, staged, skipped }, null, 2),
-);
+// Read-only extraction by default; database staging is explicit and local-only.
+import {writeFile} from "node:fs/promises";
+import {execFileSync} from "node:child_process";
+import {ConvexHttpClient} from "convex/browser";
+import {makeFunctionReference} from "convex/server";
+import {extractLegacy,legacyUrl,sitemapLinks} from "./legacy-extractor.mjs";
+const args=process.argv.slice(2),output=args.includes("--output")?args[args.indexOf("--output")+1]:"/private/tmp/nia-legacy-review.json",stage=args.includes("--stage"),useCurl=args.includes("--curl");
+async function download(url){url=legacyUrl(url);if(useCurl)return execFileSync("curl",["--fail","--silent","--show-error","--max-time","30",url],{encoding:"utf8",maxBuffer:12000000});const response=await fetch(url,{redirect:"error",signal:AbortSignal.timeout(30000)});if(!response.ok)throw new Error(`HTTP ${response.status}`);return response.text();}
+const queue=[legacyUrl(process.env.LEGACY_SITEMAP_URL??"https://www.niaforrester.com/sitemap.xml")],visited=new Set(),pages=new Set(),errors=[];
+while(queue.length){const url=queue.shift();if(visited.has(url))continue;visited.add(url);try{const xml=await download(url),links=sitemapLinks(xml);if(/<sitemapindex\b/.test(xml))queue.push(...links);else links.forEach(u=>pages.add(u));}catch(error){errors.push({url,error:String(error)});}}
+const records=[];
+for(const url of pages){try{records.push(extractLegacy(await download(url),url));}catch(error){errors.push({url,error:String(error)});}}
+const report={generatedAt:new Date().toISOString(),sitemaps:[...visited],discovered:pages.size,extracted:records.length,errors,records};
+await writeFile(output,JSON.stringify(report,null,2),{mode:0o600});console.log(JSON.stringify({output,discovered:pages.size,extracted:records.length,errors:errors.length,editorial:records.filter(r=>!r.needsMapping).length,requiresManualMapping:records.filter(r=>r.needsMapping).length}));
+if(stage){const url=process.env.NEXT_PUBLIC_CONVEX_URL,token=process.env.CONVEX_AUTH_TOKEN;if(!url||!token)throw new Error("Staging requires NEXT_PUBLIC_CONVEX_URL and an editor/admin CONVEX_AUTH_TOKEN.");if(!["127.0.0.1","localhost"].includes(new URL(url).hostname))throw new Error("Production staging requires separate release authorization.");const client=new ConvexHttpClient(url);client.setAuth(token);for(let i=0;i<records.length;i+=20){const batch=records.slice(i,i+20).map(({sourceUrl,checksum,payload})=>({sourceUrl,checksum,payload}));console.log(await client.mutation(makeFunctionReference("cms:stageImports"),{records:batch}));}}
+if(errors.length)process.exitCode=1;

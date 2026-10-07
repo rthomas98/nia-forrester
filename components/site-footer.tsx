@@ -1,5 +1,6 @@
 import { BrandMark } from "@/components/brand-mark";
 import { Footer15 } from "@/components/relume/footer15";
+import { SocialLinks } from "@/components/social-links";
 
 export default function SiteFooter() {
   return (
@@ -17,6 +18,7 @@ export default function SiteFooter() {
           <p className="mt-3 font-ui text-tiny tracking-[0.12em] text-taupe uppercase">
             She Who Writes Herself · niaforrester.com
           </p>
+          <SocialLinks className="mt-6" />
         </>
       }
       columnLinks={[
@@ -25,6 +27,10 @@ export default function SiteFooter() {
           links: [
             { title: "Serials", url: "/serial" },
             { title: "Essays", url: "/read" },
+            { title: "Blog", url: "/blog" },
+            { title: "Quick Bites", url: "/quick-bites" },
+            { title: "Short Reads", url: "/short-reads" },
+            { title: "Outtakes", url: "/outtakes" },
             { title: "The Backlist", url: "/read#backlist" },
             { title: "Audiobooks", url: "/read" },
           ],

@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { editorialFields } from "./editorialModel";
 
 const publishStatus = v.union(
   v.literal("draft"),
@@ -16,6 +17,24 @@ const membershipTier = v.union(
 );
 
 export default defineSchema({
+  editorialPosts: defineTable({
+    ...editorialFields,
+    version: v.number(), createdAt: v.number(), updatedAt: v.number(), updatedBy: v.string(), searchText: v.string(),
+    sourceUrl: v.optional(v.string()), sourceChecksum: v.optional(v.string()),
+  }).index("by_slug", ["slug"]).index("by_kind_status_date", ["kind", "status", "publishedAt"])
+    .index("by_updated", ["updatedAt"]).index("by_source", ["sourceUrl"])
+    .searchIndex("search_editorial", {searchField:"searchText",filterFields:["kind","status","category"]}),
+  editorialRevisions: defineTable({
+    postId: v.id("editorialPosts"), version: v.number(), snapshot: v.string(),
+    actor: v.string(), createdAt: v.number(),
+  }).index("by_post", ["postId", "version"]),
+  editorialImports: defineTable({
+    sourceUrl: v.string(), checksum: v.string(), payload: v.string(),
+    status: v.union(v.literal("staged"), v.literal("drafted"), v.literal("skipped")),
+    targetId: v.optional(v.id("editorialPosts")), createdAt: v.number(), updatedAt: v.number(),
+  }).index("by_source", ["sourceUrl"]).index("by_status", ["status"]),
+  editorialMedia: defineTable({storageId: v.id("_storage"), url: v.string(), uploadedBy: v.string(), createdAt: v.number()})
+    .index("by_storage", ["storageId"]),
   profiles: defineTable({
     authUserId: v.string(),
     email: v.string(),

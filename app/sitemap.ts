@@ -1,5 +1,7 @@
 import type { MetadataRoute } from "next";
 import { fetchQuery } from "convex/nextjs";
+import { api } from "@/convex/_generated/api";
+import { editorialPath } from "@/lib/editorial-routes";
 import {
   CATALOG_LIST_LIMIT,
   catalogApi,
@@ -8,8 +10,8 @@ import {
 
 const baseUrl = "https://www.niaforrester.com";
 
-// Published books change over time; refresh the sitemap hourly.
-export const revalidate = 3600;
+// Convex reads are uncached; generate from current published content per request.
+export const dynamic = "force-dynamic";
 
 /**
  * Detail URLs for published public books. The sitemap must always render, so
@@ -33,6 +35,22 @@ async function bookEntries(): Promise<MetadataRoute.Sitemap> {
   }
 }
 
+async function editorialEntries(): Promise<MetadataRoute.Sitemap> {
+  if (!catalogIsConfigured) return [];
+  try {
+    const posts = await fetchQuery(api.cms.sitemap, {});
+    return posts.map((post) => ({
+      url: `${baseUrl}${editorialPath(post.kind, post.slug)}`,
+      lastModified: new Date(post.updatedAt),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    }));
+  } catch (error) {
+    console.error("sitemap: published editorial lookup failed", error);
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const routes: Array<{
     path: string;
@@ -41,9 +59,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }> = [
     { path: "", changeFrequency: "weekly", priority: 1 },
     { path: "/read", changeFrequency: "weekly", priority: 0.9 },
+    { path: "/blog", changeFrequency: "weekly", priority: 0.7 },
+    { path: "/quick-bites", changeFrequency: "weekly", priority: 0.7 },
+    { path: "/short-reads", changeFrequency: "monthly", priority: 0.6 },
+    { path: "/outtakes", changeFrequency: "monthly", priority: 0.6 },
     { path: "/serial", changeFrequency: "weekly", priority: 0.9 },
     { path: "/events", changeFrequency: "weekly", priority: 0.8 },
     { path: "/academy", changeFrequency: "monthly", priority: 0.7 },
+    { path: "/work-with-nia", changeFrequency: "monthly", priority: 0.6 },
     { path: "/community", changeFrequency: "weekly", priority: 0.6 },
     { path: "/membership", changeFrequency: "monthly", priority: 0.5 },
     { path: "/contact", changeFrequency: "monthly", priority: 0.4 },
@@ -75,5 +98,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: route.priority,
     }));
 
-  return [...staticEntries, ...(await bookEntries())];
+  const [books, editorial] = await Promise.all([bookEntries(), editorialEntries()]);
+  return [...staticEntries, ...books, ...editorial];
 }

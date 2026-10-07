@@ -28,6 +28,7 @@ import {
   type CatalogBook,
 } from "@/lib/catalog";
 import { secondaryAction } from "@/lib/catalog-styles";
+import { getSignedCopyOffer } from "@/lib/legacy-offers";
 import { ProductHeader1 } from "@/components/relume/product-header1";
 import { Product1 } from "@/components/relume/product1";
 import { buttonVariants } from "@/components/ui/button";
@@ -82,6 +83,20 @@ function BookFacts({ book }: { book: CatalogBook }) {
   );
 }
 
+const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+/** A signed copy, only when the original shop lists this title; the request starts on this site. */
+function SignedCopy({ book }: { book: CatalogBook }) {
+  const offer = getSignedCopyOffer(book.title);
+  if (!offer) return null;
+  const price = usd.format(offer.priceInCents / 100);
+  return (
+    <Link href={`/signed-copy/${book.slug}`} className={`${secondaryAction} self-start`}>
+      Signed &amp; Personalized Copy · {price}
+    </Link>
+  );
+}
+
 function BookHero({ book }: { book: CatalogBook }) {
   const description = bookDescription(book);
 
@@ -122,6 +137,7 @@ function BookHero({ book }: { book: CatalogBook }) {
 
       <div className="mt-8 flex flex-wrap items-start gap-4">
         <PurchaseLink book={book} />
+        <SignedCopy book={book} />
         <Link href="/read#backlist" className={secondaryAction}>
           Browse the Backlist
         </Link>

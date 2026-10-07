@@ -1,8 +1,10 @@
 /**
  * Relume Footer 15 (slug: footer15), vendored via the Relume Library MCP.
  * Adaptations: Next.js `Link`, typed link columns and brand block slot. The address,
- * phone, social icons and company-logo rows were removed because the site has no
- * real data for them (no placeholder contact details are rendered).
+ * phone and company-logo rows were removed because the site has no real data for
+ * them (no placeholder contact details are rendered). Social icons are not built in
+ * here; the site passes `SocialLinks` (Instagram, TikTok, Threads, Facebook) through the
+ * brand slot from `components/site-footer.tsx`.
  */
 import Link from "next/link";
 import type { ReactNode } from "react";

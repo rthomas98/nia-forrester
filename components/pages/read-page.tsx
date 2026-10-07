@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { EditorialDiscovery } from "@/components/editorial/editorial-discovery";
 import { CatalogLibrary } from "@/components/catalog/catalog-library";
 import { PublishedContent } from "@/components/published-content";
 import { Header46 } from "@/components/relume/header46";
@@ -50,7 +51,6 @@ export default function ReadPage() {
             tagline="Novels & Series"
             heading="The Backlist"
             headingId="backlist-heading"
-            viewAll={<span className={sectionNote}>By series · read order kept intact</span>}
           >
             <CatalogLibrary view="books"/>
           </Product1>
@@ -73,5 +73,6 @@ export default function ReadPage() {
             <PublishedContent kind="essay"/>
           </Blog60>
         </div>)}
+      <EditorialDiscovery heading="Blog, Quick Bites, Short Reads & Outtakes" />
     </main>);
 }

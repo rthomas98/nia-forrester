@@ -45,6 +45,7 @@ export interface CatalogBook {
   series: CatalogSeriesRef | null;
   seriesPosition?: number;
   publicationDate?: string;
+  comingSoon?: boolean;
   formats: CatalogFormat[];
   editions?: CatalogEdition[];
   asin?: string;

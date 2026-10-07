@@ -69,7 +69,7 @@ export const Blog60Card = ({ url, image, category, title, description, linkLabel
           aria-hidden="true"
           className="relative aspect-[2/3] w-full flex-none overflow-hidden bg-wine-sunken sm:w-44"
         >
-          <Image src={image.src} alt="" fill sizes="(min-width: 640px) 176px, 100vw" className="object-cover" />
+          <Image src={image.src} alt="" fill unoptimized={/^https?:\/\//.test(image.src)} sizes="(min-width: 640px) 176px, 100vw" className="object-cover" />
         </Link>
       ) : null}
       <div className="flex flex-1 flex-col px-5 py-6 md:p-6">

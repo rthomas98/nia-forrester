@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { coverPath, type CatalogBook } from "@/lib/catalog";
+import { isComingSoon } from "@/lib/editorial-catalog";
 
 const titleSizes = {
   shelf: "p-3 text-[15px]",
@@ -12,7 +13,7 @@ const titleSizes = {
 /**
  * Renders `coverAsset.path` through next/image. A book without a usable local
  * asset (or one whose file fails to load) gets a typographic brand cover
- * rather than someone else's artwork.
+ * rather than someone else's artwork. Forthcoming titles carry a Coming Soon banner.
  */
 export function CatalogCover({
   book,
@@ -20,7 +21,7 @@ export function CatalogCover({
   variant = "shelf",
   eager = false,
 }: {
-  book: Pick<CatalogBook, "title" | "coverAsset">;
+  book: CatalogBook;
   sizes: string;
   variant?: keyof typeof titleSizes;
   eager?: boolean;
@@ -32,6 +33,7 @@ export function CatalogCover({
       sizes={sizes}
       variant={variant}
       eager={eager}
+      comingSoon={isComingSoon(book)}
     />
   );
 }
@@ -43,12 +45,14 @@ export function CoverFrame({
   sizes,
   variant = "shelf",
   eager = false,
+  comingSoon = false,
 }: {
   title: string;
   src: string | null;
   sizes: string;
   variant?: keyof typeof titleSizes;
   eager?: boolean;
+  comingSoon?: boolean;
 }) {
   const path = src;
   const [failedPath, setFailedPath] = useState<string | null>(null);
@@ -79,6 +83,11 @@ export function CoverFrame({
           </span>
         </div>
       )}
+      {comingSoon ? (
+        <span className="absolute inset-x-0 bottom-0 bg-cabernet/95 px-2 py-1.5 text-center font-ui text-[0.625rem] font-semibold tracking-[0.18em] text-cream uppercase">
+          Coming Soon
+        </span>
+      ) : null}
     </div>
   );
 }

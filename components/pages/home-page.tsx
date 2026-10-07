@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Check } from "relume-icons";
-import { CatalogCounts, PublishedContent, PublishedShelf } from "@/components/published-content";
+import { CatalogCounts, PublishedShelf, WhatsNew } from "@/components/published-content";
 import { Header1 } from "@/components/relume/header1";
 import { Blog60 } from "@/components/relume/blog60";
 import { Layout399 } from "@/components/relume/layout399";
@@ -72,16 +72,16 @@ export default function HomePage() {
       />
 
       <Blog60
-        tagline="#TheSerial"
-        heading="Serials"
-        headingId="home-serials-heading"
-        description="New fiction, chapter by chapter. The first chapters are free to read online."
-        action={<Link href="/serial" className={buttonVariants({ variant: "secondary" })}>
-            All Serials
+        tagline="Latest"
+        heading="What’s New"
+        headingId="home-whats-new-heading"
+        description="The newest published writing from Nia, with the full library a click away."
+        action={<Link href="/read" className={buttonVariants({ variant: "secondary" })}>
+            Explore the Library
           </Link>}
         className="border-t border-hairline"
       >
-        <PublishedContent kind="serial"/>
+        <WhatsNew/>
       </Blog60>
 
       <Layout399
@@ -92,7 +92,7 @@ export default function HomePage() {
             {
                 tagline: "Read",
                 heading: "Books, Serials & Essays",
-                description: "The whole backlist, the serials, and the essays — published writing in one library.",
+                description: "Explore published writing in the library.",
                 url: "/read",
                 linkLabel: "Browse the library",
                 image: { src: "/images/the-best-bad-idea.png", alt: "Cover of The Best Bad Idea", position: "object-top" },
@@ -126,9 +126,8 @@ export default function HomePage() {
 
       <Product1
         tagline="From the Catalog"
-        heading="Where to Start"
+        heading="Recent and Coming Releases"
         headingId="home-shelf-heading"
-        description="A few doors into the backlist."
         viewAll={<Link href="/read" className={buttonVariants({ variant: "secondary" })}>
             Browse the Library
           </Link>}
@@ -143,9 +142,8 @@ export default function HomePage() {
         media={<Image src="/images/nia-closeup-pensive.jpeg" alt="Close-up portrait of Nia Forrester" fill sizes="(max-width: 768px) 90vw, 560px" className="object-cover object-center"/>}
         description={<>
             <p>
-              By day, a public-policy attorney in Philadelphia. By night, she writes
-              woman-centered fiction about love, race, and the interior lives of
-              Black women, with published work available in the library.
+              Public-policy attorney by day. By night, Nia writes woman-centered
+              fiction about love, race, and the interior lives of Black women.
             </p>
             <blockquote className="mt-6 border-l border-champagne pl-5 font-display text-h5 leading-snug font-medium text-cream">
               &ldquo;I write the women I know — difficult, tender, and fully grown.&rdquo;

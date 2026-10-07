@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/auth-context";
 import { authClient } from "@/lib/auth-client";
+import { signInDestination } from "@/lib/signin-destination";
 import Image from "next/image";
 import { Login7 } from "@/components/relume/login7";
 import { Button } from "@/components/ui/button";
@@ -26,16 +27,17 @@ export default function SignInPage() {
         setPending(true);
         setError("");
         try {
+            const destination = signInDestination(window.location.search);
             const result = await authClient.signIn.email({
                 email: email.trim(),
                 password,
-                callbackURL: "/dashboard",
+                callbackURL: destination,
             });
             if (result.error) {
                 setError(result.error.message ?? "We couldn’t sign you in.");
                 return;
             }
-            router.push("/dashboard");
+            router.push(destination);
             router.refresh();
         }
         catch {
@@ -60,7 +62,7 @@ export default function SignInPage() {
         try {
             const result = await authClient.signIn.magicLink({
                 email: email.trim(),
-                callbackURL: "/dashboard",
+                callbackURL: signInDestination(window.location.search),
                 errorCallbackURL: "/signin",
             });
             if (result.error) {

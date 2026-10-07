@@ -13,21 +13,6 @@ import { Button, buttonVariants } from "@/components/ui/button";
 export default function SiteHeader() {
   const pathname = usePathname();
   const { authed, signOut, user } = useAuth();
-  const visibleNavItems = navItems.filter((item) => {
-    if (
-      item.key === "community" &&
-      process.env.NEXT_PUBLIC_COMMUNITY_ENABLED === "false"
-    ) {
-      return false;
-    }
-    if (
-      item.key === "membership" &&
-      process.env.NEXT_PUBLIC_MEMBERSHIP_ENABLED === "false"
-    ) {
-      return false;
-    }
-    return true;
-  });
 
   // One full navigation after sign-out; see lib/sign-out.ts for the push+refresh race.
   const handleSignOut = () => signOutToHome(signOut);
@@ -35,11 +20,18 @@ export default function SiteHeader() {
   return (
     <Navbar1
       logo={{ url: "/", label: "Nia Forrester home", content: <BrandMark /> }}
-      navLinks={visibleNavItems.map((item) => ({
+      navLinks={navItems.map((item) => ({
         key: item.key,
         url: item.href,
         title: item.label,
         active: item.match.some((match) => pathname.startsWith(match)),
+        children: item.children?.map((child) => ({
+          key: child.key,
+          url: child.href,
+          title: child.label,
+          // Hash destinations share their page's path, so only path links mark the current page.
+          active: !child.href.includes("#") && (pathname === child.href || pathname.startsWith(`${child.href}/`)),
+        })),
       }))}
       actions={(closeMenu) =>
         !authed ? (

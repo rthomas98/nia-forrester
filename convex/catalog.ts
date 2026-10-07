@@ -59,6 +59,7 @@ export const bookInput = v.object({
   seriesCatalogKey: v.optional(v.string()),
   seriesPosition: v.optional(v.number()),
   publicationDate: v.optional(v.string()),
+  comingSoon: v.optional(v.boolean()),
   formats: v.array(format),
   editions: v.optional(
     v.array(v.object({ format, asin: v.string(), productUrl: v.string() })),
@@ -255,6 +256,7 @@ async function presentBook(ctx: CatalogQueryCtx, book: CanonicalBook) {
       : null,
     seriesPosition: book.seriesPosition,
     publicationDate: book.publicationDate,
+    comingSoon: book.tags.includes("coming-soon"),
     formats: book.formats,
     editions: book.editions,
     asin: book.asin,
@@ -433,7 +435,8 @@ export async function upsertBookRecord(
     excerpt: input.description ?? "",
     seriesId: series?._id,
     accessTier: "free" as const,
-    tags: [],
+    tags: input.comingSoon === undefined ? (existing?.tags ?? [])
+      : [...(existing?.tags ?? []).filter(tag => tag !== "coming-soon"), ...(input.comingSoon ? ["coming-soon"] : [])],
     updatedAt: now,
   };
   const contentId = existing?._id ?? (await ctx.db.insert("content", {

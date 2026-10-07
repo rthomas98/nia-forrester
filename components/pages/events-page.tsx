@@ -9,6 +9,7 @@ import { QueryBoundary } from "@/components/catalog/query-boundary";
 import { StatePanel } from "@/components/catalog/catalog-states";
 import { authIsConfigured } from "@/lib/auth-client";
 import { EventRegistration } from "@/components/event-registration";
+import { InvitationForm } from "@/components/inquiry-form";
 import { Header46 } from "@/components/relume/header46";
 import { Event1Filters, Event1Row } from "@/components/relume/event1";
 import { Layout659 } from "@/components/relume/layout659";
@@ -116,9 +117,14 @@ export default function EventsPage() {
         tagline="Bring Nia to You"
         heading="Invite Nia"
         media={<Image src="/images/nia-pink-smile.jpeg" alt="Nia Forrester smiling in front of a pink mural" fill sizes="(max-width: 767px) 100vw, 560px" className="object-cover object-[50%_25%]" />}
-        description={<p>Bring Nia to your festival or book club. Tell us about your event and the date you have in mind.</p>}
-        actions={<Link href="/contact" className={buttonVariants()}>Send an Invitation ↗</Link>}
+        description={<p>Invite Nia to your festival, book club, or literary gathering. Share the details of your event and the date you have in mind, and we’ll follow up to explore the possibilities.</p>}
+        actions={<a href="#invite-nia-form" className={buttonVariants()}>Send an Invitation</a>}
       />
+      <section id="invite-nia-form" aria-label="Invitation request" className="scroll-mt-24 px-[5%] pb-16 md:pb-24">
+        <div className="mx-auto w-full max-w-3xl">
+          <InvitationForm />
+        </div>
+      </section>
     </main>
   );
 }
