@@ -1,73 +1,82 @@
 "use client";
-
-import { createContext, useContext, useSyncExternalStore, ReactNode } from "react";
-
-// localStorage is the source of truth for the mock auth state; a custom event
-// notifies subscribers so useSyncExternalStore re-reads after each write.
-const AUTH_KEY = "nf_authed";
-const AUTH_EVENT = "nf-auth-change";
-
-function subscribeAuth(onChange: () => void) {
-  window.addEventListener(AUTH_EVENT, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(AUTH_EVENT, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-function readAuthed(): boolean {
-  try {
-    return window.localStorage.getItem(AUTH_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-function writeAuthed(value: boolean) {
-  try {
-    window.localStorage.setItem(AUTH_KEY, value ? "1" : "0");
-  } catch {}
-  window.dispatchEvent(new Event(AUTH_EVENT));
-}
-
+import { createContext, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
+import { flushSync } from "react-dom";
+import { authClient, authIsConfigured } from "@/lib/auth-client";
+import { revokeAfterUnsubscribe } from "@/lib/sign-out";
 interface AuthState {
-  authed: boolean;
-  /** true once client-side state is live (always false during SSR) */
-  ready: boolean;
-  signIn: () => void;
-  signOut: () => void;
+    authed: boolean;
+    ready: boolean;
+    configured: boolean;
+    user: {
+        id: string;
+        name: string;
+        email: string;
+        image?: string | null;
+    } | null;
+    signOut: () => Promise<void>;
 }
-
 const AuthContext = createContext<AuthState>({
-  authed: false,
-  ready: false,
-  signIn: () => {},
-  signOut: () => {},
+    authed: false,
+    ready: false,
+    configured: false,
+    user: null,
+    signOut: async () => { },
 });
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const authed = useSyncExternalStore(subscribeAuth, readAuthed, () => false);
-  const ready = useSyncExternalStore(
-    subscribeAuth,
-    () => true,
-    () => false
-  );
-
-  return (
-    <AuthContext.Provider
-      value={{
-        authed,
-        ready,
-        signIn: () => writeAuthed(true),
-        signOut: () => writeAuthed(false),
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+const unconfiguredAuth: AuthState = {
+    authed: false,
+    ready: true,
+    configured: false,
+    user: null,
+    signOut: async () => { },
+};
+// React uses the server snapshot for SSR and the first hydration render, even
+// when Better Auth already has a cached session in the browser. Later client
+// renders use the client snapshot without resetting on route navigation.
+const subscribeToHydration = () => () => {};
+const clientHydrationSnapshot = () => true;
+const serverHydrationSnapshot = () => false;
+export function AuthProvider({ children }: {
+    children: ReactNode;
+}) {
+    if (!authIsConfigured) {
+        return (<AuthContext.Provider value={unconfiguredAuth}>
+        {children}
+      </AuthContext.Provider>);
+    }
+    return <ConfiguredAuthProvider>{children}</ConfiguredAuthProvider>;
 }
-
+function ConfiguredAuthProvider({ children }: {
+    children: ReactNode;
+}) {
+    const session = authClient.useSession();
+    const hydrated = useSyncExternalStore(
+        subscribeToHydration, clientHydrationSnapshot, serverHydrationSnapshot,
+    );
+    const user = hydrated ? session.data?.user ?? null : null;
+    // While signing out, the page tree (and every authenticated Convex subscriber in it)
+    // is unmounted before the session is revoked; see lib/sign-out.ts.
+    const [signingOut, setSigningOut] = useState(false);
+    const value = useMemo<AuthState>(() => ({
+        authed: Boolean(user),
+        ready: hydrated && !session.isPending,
+        configured: authIsConfigured,
+        user,
+        signOut: () => revokeAfterUnsubscribe(
+            () => flushSync(() => setSigningOut(true)),
+            () => authClient.signOut(),
+        ),
+    }), [hydrated, session.isPending, user]);
+    return (<AuthContext.Provider value={value}>
+      {signingOut ? <SigningOut /> : children}
+    </AuthContext.Provider>);
+}
+function SigningOut() {
+    return (<main className="flex min-h-screen items-center justify-center px-[5%]">
+      <p role="status" className="font-ui text-small font-semibold tracking-[0.18em] text-taupe uppercase">
+        Signing out…
+      </p>
+    </main>);
+}
 export function useAuth() {
-  return useContext(AuthContext);
+    return useContext(AuthContext);
 }
